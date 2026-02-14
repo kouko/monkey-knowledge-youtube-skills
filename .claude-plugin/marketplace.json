@@ -1,0 +1,21 @@
+{
+  "name": "monkey-marketplace",
+  "owner": {
+    "name": "kouko",
+    "url": "https://github.com/kouko"
+  },
+  "metadata": {
+    "description": "Knowledge and productivity skills marketplace for Claude Code",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "youtube-summarizer",
+      "source": "./plugins/youtube-summarizer",
+      "description": "Summarize YouTube videos from URL or transcript",
+      "version": "1.0.0",
+      "category": "productivity",
+      "keywords": ["youtube", "video", "summarize", "transcript"]
+    }
+  ]
+}

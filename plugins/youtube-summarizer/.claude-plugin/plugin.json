@@ -1,0 +1,13 @@
+{
+  "name": "youtube-summarizer",
+  "version": "1.0.0",
+  "description": "Summarize YouTube videos from URL or transcript",
+  "author": {
+    "name": "kouko",
+    "url": "https://github.com/kouko"
+  },
+  "homepage": "https://github.com/kouko/monkey-knowledge-skills",
+  "repository": "https://github.com/kouko/monkey-knowledge-skills",
+  "license": "MIT",
+  "keywords": ["youtube", "video", "summarize", "transcript"]
+}
