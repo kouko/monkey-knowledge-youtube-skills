@@ -225,7 +225,7 @@ claude --plugin-dir /path/to/monkey-knowledge-skills/plugins/youtube-summarizer
 
 啟動 Claude Code 後：
 1. 執行 `/skills` 查看可用 skills
-2. 應看到 `youtube-search`、`youtube-get-info`、`youtube-get-transcript`、`youtube-get-audio`、`transcript-summary`
+2. 應看到 `youtube-search`、`youtube-get-info`、`youtube-get-transcript`、`youtube-get-audio`、`youtube-get-channel-latest`、`transcript-summary`
 3. 使用 `/youtube-search <query>` 測試功能
 
 ### 開發流程
@@ -238,6 +238,6 @@ claude --plugin-dir /path/to/monkey-knowledge-skills/plugins/youtube-summarizer
 ## 範例 Plugin
 
 參考 `plugins/youtube-summarizer/` 的實作：
-- 5 個獨立 skills（search、get-info、get-transcript、get-audio、transcript-summary）
+- 6 個獨立 skills（search、get-info、get-transcript、get-audio、get-channel-latest、transcript-summary）
 - 智能依賴管理（yt-dlp、jq 自動下載）
 - 統一 JSON 輸出格式

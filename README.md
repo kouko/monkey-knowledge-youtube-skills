@@ -16,7 +16,7 @@ A Claude Code plugin marketplace for productivity skills.
 
 | Plugin | Description | Skills |
 |--------|-------------|--------|
-| `youtube-summarizer` | Summarize YouTube videos | `youtube-search`, `youtube-get-info`, `youtube-get-transcript`, `youtube-get-audio`, `transcript-summary` |
+| `youtube-summarizer` | Summarize YouTube videos | `youtube-search`, `youtube-get-info`, `youtube-get-transcript`, `youtube-get-audio`, `youtube-get-channel-latest`, `transcript-summary` |
 
 ## Plugin Details
 
@@ -45,7 +45,7 @@ Summarize YouTube videos from URL or transcript.
 claude --plugin-dir ./plugins/youtube-summarizer
 
 # 驗證 skills 載入
-/skills  # 應顯示 youtube-search, youtube-get-info, youtube-get-transcript, youtube-get-audio, transcript-summary
+/skills  # 應顯示 youtube-search, youtube-get-info, youtube-get-transcript, youtube-get-audio, youtube-get-channel-latest, transcript-summary
 ```
 
 ### Validate Structure
@@ -77,6 +77,9 @@ monkey-knowledge-skills/
 │           ├── youtube-get-audio/
 │           │   ├── SKILL.md
 │           │   └── scripts/audio.sh
+│           ├── youtube-get-channel-latest/
+│           │   ├── SKILL.md
+│           │   └── scripts/channel-latest.sh
 │           └── transcript-summary/
 │               ├── SKILL.md
 │               └── scripts/summary.sh
