@@ -53,18 +53,47 @@ youtube-audio-transcribe/
 | Parameter | Required | Default | Description |
 |-----------|----------|---------|-------------|
 | audio_file | Yes | - | Path to audio file |
-| model | No | medium | Model name |
+| model | No | auto | Model name (auto = automatic selection) |
 | language | No | auto | Language code |
 
 ### Available Models
 
+#### Standard Models
+
 | Model | Size | RAM | Description |
 |-------|------|-----|-------------|
+| auto | - | - | Automatic selection based on language (default) |
 | tiny | 75MB | ~273MB | Fastest, lowest accuracy |
 | base | 142MB | ~388MB | Fast, moderate accuracy |
 | small | 466MB | ~852MB | Balanced |
-| medium | 1.5GB | ~2.1GB | High accuracy (default) |
+| medium | 1.5GB | ~2.1GB | High accuracy |
 | large-v3 | 2.9GB | ~3.9GB | Best accuracy |
+
+#### Language-Specialized Models
+
+| Model | Language | Size | Source |
+|-------|----------|------|--------|
+| belle-zh | Chinese | 1.62GB | [BELLE-2](https://huggingface.co/BELLE-2/Belle-whisper-large-v3-turbo-zh-ggml) |
+| kotoba-ja | Japanese | - | [kotoba-tech](https://huggingface.co/kotoba-tech/kotoba-whisper-v2.0-ggml) |
+| kotoba-ja-q5 | Japanese | smaller | Quantized version (faster) |
+
+#### Auto-Selection (model=auto)
+
+When model is `auto` (default), the script automatically selects the best model based on language:
+
+| Language | Auto-Selected Model |
+|----------|---------------------|
+| zh | belle-zh (Chinese-specialized) |
+| ja | kotoba-ja (Japanese-specialized) |
+| others | medium (general purpose) |
+
+```bash
+# Auto-selection examples:
+./scripts/transcribe.sh video.m4a auto zh   # → uses belle-zh
+./scripts/transcribe.sh video.m4a auto ja   # → uses kotoba-ja
+./scripts/transcribe.sh video.m4a auto en   # → uses medium
+./scripts/transcribe.sh video.m4a           # → uses medium (default)
+```
 
 ### Supported Languages
 
@@ -81,6 +110,45 @@ youtube-audio-transcribe/
 ```json
 {
   "status": "success",
+  "file_path": "/tmp/youtube-audio-transcribe/video.json",
+  "text_file_path": "/tmp/youtube-audio-transcribe/video.txt",
+  "language": "en",
+  "duration": "3:32",
+  "model": "medium",
+  "char_count": 12345,
+  "line_count": 100,
+  "text_char_count": 10000,
+  "text_line_count": 50
+}
+```
+
+**Error:**
+```json
+{
+  "status": "error",
+  "message": "Error description"
+}
+```
+
+### Output Fields
+
+| Field | Description |
+|-------|-------------|
+| `file_path` | Absolute path to JSON file (with segments) |
+| `text_file_path` | Absolute path to plain text file |
+| `language` | Detected language code |
+| `duration` | Audio duration |
+| `model` | Model used for transcription |
+| `char_count` | Character count of JSON file |
+| `line_count` | Line count of JSON file |
+| `text_char_count` | Character count of plain text file |
+| `text_line_count` | Line count of plain text file |
+
+### JSON File Format
+
+The JSON file at `file_path` contains:
+```json
+{
   "text": "Full transcription text...",
   "language": "en",
   "duration": "3:32",
@@ -92,14 +160,6 @@ youtube-audio-transcribe/
       "text": "First segment..."
     }
   ]
-}
-```
-
-**Error:**
-```json
-{
-  "status": "error",
-  "message": "Error description"
 }
 ```
 
@@ -117,6 +177,15 @@ youtube-audio-transcribe/
 
 # Use tiny model for quick preview
 ./scripts/transcribe.sh long-video.m4a tiny auto
+
+# Use Chinese-specialized model for better Chinese transcription
+./scripts/transcribe.sh chinese-video.m4a belle-zh zh
+
+# Use Japanese-specialized model for better Japanese transcription
+./scripts/transcribe.sh japanese-video.m4a kotoba-ja ja
+
+# Use quantized Japanese model for faster processing
+./scripts/transcribe.sh japanese-video.m4a kotoba-ja-q5 ja
 ```
 
 ## How It Works
@@ -153,8 +222,14 @@ youtube-audio-transcribe/
                │
                ▼
 ┌─────────────────────────────┐
-│   Parse JSON output         │
-│   Format result             │
+│   Save to files             │
+│   .json (full) + .txt       │
+└──────────────┬──────────────┘
+               │
+               ▼
+┌─────────────────────────────┐
+│   Return file paths         │
+│   {file_path, text_file_path}│
 └─────────────────────────────┘
 ```
 
@@ -198,9 +273,9 @@ This will download a pre-built ffmpeg binary from evermeet.cx.
 
 ## Performance Tips
 
-1. **Model selection**: Start with `small` for most uses, upgrade if accuracy needed
-2. **Audio quality**: Better source audio = better transcription
-3. **Language hint**: Specify language for better accuracy when known
+1. **Specify language**: Enables auto-selection of specialized models (zh→belle-zh, ja→kotoba-ja) for best accuracy
+2. **Model selection**: Use `auto` (default) for optimal results, or `small` for faster processing
+3. **Audio quality**: Better source audio = better transcription
 4. **Memory**: Ensure enough RAM for chosen model
 
 ## License
