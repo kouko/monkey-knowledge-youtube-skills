@@ -279,6 +279,10 @@ Automatically detects architecture (Apple Silicon or Intel) and downloads the ap
 3. **Audio quality**: Better source audio = better transcription
 4. **Memory**: Ensure enough RAM for chosen model
 
+## Security
+
+See [MACOS_SECURITY.md](../../../../docs/MACOS_SECURITY.md) for details on macOS Gatekeeper and quarantine behavior.
+
 ## License
 
 MIT
