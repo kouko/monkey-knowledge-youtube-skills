@@ -91,7 +91,7 @@ Use parallel subagents to process chunks independently, keeping the main convers
      - Main topics and arguments discussed
      - Key data points (numbers, dates, names) in **bold**
      - Notable quotes as blockquotes
-     Write the summary in the same language as the transcript.
+     Write the summary in the same language as the transcript (this will be synthesized into the user's language in the final step).
      IMPORTANT — Boundary continuity: If the beginning of your chunk clearly continues a topic from a previous section, prefix your first bullet with [continues from previous]. If the end of your chunk is mid-topic and clearly continues into the next section, suffix your last bullet with [continues to next]. This helps the synthesis step merge cross-chunk topics.
      ```
    - Use `model: "haiku"` for cost efficiency
@@ -159,10 +159,10 @@ After obtaining the transcript, generate the summary using EXACTLY this structur
    - Person names, company names, product names → **bold** on first mention
    - Direct quotes that are impactful → use blockquote format
 
-3. **Language**: Write the summary in the same language as the transcript
-   - If transcript is in English, summarize in English
-   - If transcript is in Japanese, summarize in Japanese
-   - If transcript is in Chinese, summarize in Traditional Chinese (繁體中文)
+3. **Language**: Write the summary in the user's conversation language
+   - Detect the language the user is using in the current conversation
+   - Write the entire summary (section titles, bullet points, key takeaways) in that language
+   - Example: If user speaks Traditional Chinese, summarize in 繁體中文 regardless of transcript language
 
 4. **Length**: Target compression ratio based on processing strategy:
 
