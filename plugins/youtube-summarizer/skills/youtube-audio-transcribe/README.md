@@ -253,7 +253,8 @@ This will:
 ./scripts/_download_ffmpeg.sh
 ```
 
-This will download a pre-built ffmpeg binary from evermeet.cx.
+This will download a pre-built ffmpeg binary from martin-riedl.de (signed & notarized).
+Automatically detects architecture (Apple Silicon or Intel) and downloads the appropriate version.
 
 ## Use Cases
 

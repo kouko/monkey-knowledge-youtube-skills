@@ -1,7 +1,8 @@
 #!/bin/bash
 # _download_ffmpeg.sh - Download ffmpeg binary for macOS
 #
-# Downloads ffmpeg from evermeet.cx (x86_64) or builds universal binary
+# Downloads ffmpeg from martin-riedl.de (signed & notarized)
+# Supports both Apple Silicon (arm64) and Intel (x86_64)
 #
 # Usage:
 #   ./scripts/_download_ffmpeg.sh
@@ -17,17 +18,39 @@ if [ "$(uname -s)" != "Darwin" ]; then
     exit 1
 fi
 
+# Detect architecture
+get_arch() {
+    local arch
+    arch=$(uname -m)
+    case "$arch" in
+        arm64)
+            echo "arm64"
+            ;;
+        x86_64)
+            echo "amd64"
+            ;;
+        *)
+            echo "ERROR: Unsupported architecture: $arch" >&2
+            exit 1
+            ;;
+    esac
+}
+
 download_ffmpeg() {
+    local arch
+    arch=$(get_arch)
+
+    echo "[INFO] Detected architecture: $arch" >&2
     echo "[INFO] Downloading ffmpeg..." >&2
     mkdir -p "$BIN_DIR"
 
     local temp_dir="/tmp/ffmpeg-download-$$"
     mkdir -p "$temp_dir"
 
-    # Download from evermeet.cx (provides macOS binaries)
-    local download_url="https://evermeet.cx/ffmpeg/getrelease/ffmpeg/zip"
+    # Download from martin-riedl.de (signed & notarized)
+    local download_url="https://ffmpeg.martin-riedl.de/redirect/latest/macos/${arch}/snapshot/ffmpeg.zip"
 
-    echo "[INFO] Downloading from evermeet.cx..." >&2
+    echo "[INFO] Downloading from martin-riedl.de ($arch)..." >&2
     curl -L -o "$temp_dir/ffmpeg.zip" "$download_url"
 
     echo "[INFO] Extracting..." >&2
@@ -50,6 +73,7 @@ download_ffmpeg() {
     rm -rf "$temp_dir"
 
     echo "[INFO] ffmpeg installed: $BIN_DIR/ffmpeg" >&2
+    echo "[INFO] Architecture: $arch (native)" >&2
 }
 
 download_ffmpeg
