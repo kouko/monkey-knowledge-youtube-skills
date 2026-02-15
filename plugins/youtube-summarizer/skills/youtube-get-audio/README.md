@@ -1,10 +1,13 @@
 # YouTube Audio Skill
 
-Download audio from YouTube videos.
+Download audio from YouTube videos with automatic cookie fallback for restricted content.
 
 ## Overview
 
-This skill extracts audio from YouTube videos using `yt-dlp`. The output is in the best available format (typically m4a, webm, or opus) without conversion. The script returns a JSON response with the file path for easy LLM integration.
+This skill extracts audio from YouTube videos using `yt-dlp`. It supports:
+- **Best available format**: m4a, webm, or opus (no conversion needed)
+- **Cookie fallback**: Auto-retry with browser cookies when download fails
+- **Chrome multi-profile**: Automatically tries all Chrome profiles
 
 ## File Structure
 
@@ -35,7 +38,7 @@ youtube-get-audio/
 ### Usage
 
 ```bash
-./scripts/audio.sh "<URL>" [output_dir]
+./scripts/audio.sh "<URL>" [output_dir] [browser]
 ```
 
 ### Parameters
@@ -44,6 +47,7 @@ youtube-get-audio/
 |-----------|----------|---------|-------------|
 | URL | Yes | - | YouTube video URL |
 | output_dir | No | /tmp/youtube-audio/ | Output directory |
+| browser | No | auto | Browser for cookies (chrome, firefox, safari, edge, brave) |
 
 ### Output Format (JSON)
 
@@ -60,7 +64,7 @@ youtube-get-audio/
 ```json
 {
   "status": "error",
-  "message": "Download failed or file not found"
+  "message": "Download failed (tried with and without cookies)"
 }
 ```
 
@@ -69,67 +73,121 @@ youtube-get-audio/
 | Field | Type | Description |
 |-------|------|-------------|
 | status | string | "success" or "error" |
-| file_path | string | Absolute path to MP3 file |
+| file_path | string | Absolute path to audio file |
 | file_size | string | Human-readable file size |
 | message | string | Error message (only on failure) |
 
 ## Examples
 
 ```bash
-# Download to default location
+# Download to default location (auto cookie fallback)
 ./scripts/audio.sh "https://www.youtube.com/watch?v=xxx"
 
 # Download to custom directory
 ./scripts/audio.sh "https://www.youtube.com/watch?v=xxx" ~/Music
 
-# Download to current directory
-./scripts/audio.sh "https://www.youtube.com/watch?v=xxx" .
+# Force use Chrome cookies
+./scripts/audio.sh "https://www.youtube.com/watch?v=xxx" /tmp chrome
+
+# Force use Firefox cookies
+./scripts/audio.sh "https://www.youtube.com/watch?v=xxx" /tmp firefox
 ```
 
 ## How It Works
 
 ```
-┌─────────────────────┐
-│     audio.sh        │
-└──────────┬──────────┘
-           │
-           ▼
-┌─────────────────────┐
-│  Load dependencies  │
-│  _ensure_ytdlp.sh   │
-│  _ensure_jq.sh      │
-└──────────┬──────────┘
-           │
-           ▼
-┌─────────────────────┐
-│  Create output dir  │
-│  mkdir -p           │
-└──────────┬──────────┘
-           │
-           ▼
-┌─────────────────────┐
-│  yt-dlp download    │
-│  -x (extract audio) │
-│  best available fmt │
-│  (stderr output)    │
-└──────────┬──────────┘
-           │
-           ▼
-┌─────────────────────┐
-│  Find audio file    │
-│  ls -t | head -1    │
-└──────────┬──────────┘
-           │
-     ┌─────┴─────┐
-     │           │
-  Found?      Not Found
-     │           │
-     ▼           ▼
-┌─────────┐  ┌─────────┐
-│ Success │  │  Error  │
-│  JSON   │  │  JSON   │
-└─────────┘  └─────────┘
+┌─────────────────────────────┐
+│         audio.sh            │
+│  URL, [output_dir], [browser]│
+└──────────────┬──────────────┘
+               │
+               ▼
+┌─────────────────────────────┐
+│   First attempt (no auth)   │
+└──────────────┬──────────────┘
+               │
+       ┌───────┴───────┐
+       │               │
+    Success         Failed
+       │               │
+       ▼               ▼
+┌─────────────┐  ┌─────────────────────┐
+│ Return JSON │  │ Auto-detect browser │
+│ with path   │  │ + Chrome profiles   │
+└─────────────┘  └──────────┬──────────┘
+                            │
+                            ▼
+               ┌─────────────────────────────┐
+               │ Try browsers in order:      │
+               │ chrome → firefox → safari   │
+               │ → edge → brave              │
+               └──────────────┬──────────────┘
+                              │
+                              ▼
+               ┌─────────────────────────────┐
+               │ If Chrome, try profiles:    │
+               │ Default → Profile 1 → ...   │
+               └──────────────┬──────────────┘
+                              │
+                      ┌───────┴───────┐
+                      │               │
+                   Success         Failed
+                      │               │
+                      ▼               ▼
+               ┌─────────────┐  ┌─────────────┐
+               │ Return JSON │  │ Return error│
+               │ with path   │  │ JSON        │
+               └─────────────┘  └─────────────┘
 ```
+
+## Browser Cookie Fallback
+
+When initial download fails (e.g., member-only or age-restricted content), the script automatically retries with browser cookies.
+
+### Supported Browsers
+
+| Browser | Parameter | Platform | Profile Support |
+|---------|-----------|----------|-----------------|
+| Chrome | `chrome` | Windows, macOS, Linux | Auto-detect all profiles |
+| Firefox | `firefox` | Windows, macOS, Linux | Default only |
+| Safari | `safari` | macOS | Default only |
+| Edge | `edge` | Windows, macOS | Default only |
+| Brave | `brave` | Windows, macOS, Linux | Default only |
+
+### Chrome Profile Detection
+
+Chrome profile directories are automatically enumerated:
+
+| Platform | Directory |
+|----------|-----------|
+| macOS | `~/Library/Application Support/Google/Chrome/` |
+| Linux | `~/.config/google-chrome/` |
+
+Profiles are tried in order:
+1. `Default` (default profile)
+2. `Profile 1`, `Profile 2`, ... (additional profiles)
+
+Console output indicates which profile was used:
+```
+[INFO] Using cookies from: chrome:Profile 2
+```
+
+### Use Cases for Cookie Authentication
+
+- **Member-only videos**: Channel membership content
+- **Age-restricted videos**: Content requiring age verification
+- **Region-restricted content**: Some geo-blocked videos
+- **Private videos**: If your account has access
+
+## Security Considerations
+
+| Risk | Description | Mitigation |
+|------|-------------|------------|
+| Account suspension | YouTube may suspend accounts for automated access | Use secondary account |
+| Cookie expiration | YouTube cookies expire in 3-5 days | Refresh browser session periodically |
+| Privacy | Cookie files contain authentication data | Don't share or commit cookie files |
+
+**Recommendation**: Use a secondary YouTube account for downloading restricted content.
 
 ## Audio Format
 
@@ -153,34 +211,26 @@ The script downloads audio in the best available format without conversion:
 1. **Speech-to-text**: Download audio when video has no subtitles
 2. **Podcast extraction**: Save podcast audio for offline listening
 3. **Music download**: Extract music from music videos
-4. **Content analysis**: Audio analysis with external tools
-
-## Integration with LLM
-
-The JSON output is designed for easy LLM parsing:
-
-```python
-import json
-
-# Parse script output
-result = json.loads(output)
-
-if result["status"] == "success":
-    audio_file = result["file_path"]
-    # Process audio file...
-else:
-    error = result["message"]
-    # Handle error...
-```
+4. **Member content**: Access membership content with browser cookies
 
 ## Error Handling
 
 | Error | Cause | Solution |
 |-------|-------|----------|
-| `Download failed` | Invalid URL or network error | Check URL and connection |
-| `File not found` | Download failed | Check disk space and permissions |
+| `Download failed (tried with and without cookies)` | All attempts failed | Check URL, login to YouTube in browser |
+| `File not found` | Download succeeded but file missing | Check disk space and permissions |
 
 ## Troubleshooting
+
+### Cookie issues
+
+```bash
+# Check if browser is supported
+yt-dlp --cookies-from-browser chrome --list-formats "URL"
+
+# Test specific profile
+yt-dlp --cookies-from-browser "chrome:Profile 1" --list-formats "URL"
+```
 
 ### Permission errors
 
