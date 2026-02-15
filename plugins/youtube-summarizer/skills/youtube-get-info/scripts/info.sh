@@ -19,5 +19,6 @@ fi
         duration_string,
         view_count,
         upload_date,
+        language,
         description: .description[0:1000]
     }'

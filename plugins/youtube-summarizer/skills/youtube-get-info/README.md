@@ -77,6 +77,7 @@ Priority:
   "duration_string": "10:23",
   "view_count": 1234567,
   "upload_date": "20240101",
+  "language": "en",
   "description": "Video description (truncated to 1000 chars)..."
 }
 ```
@@ -90,6 +91,7 @@ Priority:
 | duration_string | string | Duration in HH:MM:SS or MM:SS format |
 | view_count | number | Total view count |
 | upload_date | string | Upload date in YYYYMMDD format |
+| language | string | Video's original language (ISO 639-1 code, e.g., en, ja, ko) |
 | description | string | Description (max 1000 characters) |
 
 ## Examples
