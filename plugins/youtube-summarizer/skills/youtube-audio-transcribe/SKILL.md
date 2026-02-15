@@ -116,25 +116,16 @@ Transcribe audio files to text using local whisper.cpp (no cloud API required).
   "message": "Model 'medium' not found. Please download it first.",
   "model": "medium",
   "model_size": "1.5GB",
-  "download_command": "./scripts/download-model.sh medium",
-  "hint": "Run the download_command in terminal to download the model with progress bar"
+  "download_command": "curl -L --progress-bar -o '/path/to/models/ggml-medium.bin' 'https://...'",
+  "download_url": "https://huggingface.co/...",
+  "output_path": "/path/to/models/ggml-medium.bin"
 }
 ```
 
 When you receive `MODEL_NOT_FOUND` error:
-1. Tell user the model needs to be downloaded first
-2. Display the `download_command` in a code block (\`\`\`bash) so user can copy without line breaks
-3. Explain that running in terminal shows progress bar
-
-Example response format:
-
-> 模型尚未下載。請在 Terminal 執行以下指令：
->
-> \`\`\`bash
-> curl -L --progress-bar -o '/path/to/models/ggml-medium.bin' 'https://...'
-> \`\`\`
->
-> 下載完成後再執行轉錄。
+1. Ask user if they want to download the model now
+2. If user agrees: run `download_command` in background, then retry transcription when complete
+3. If user declines: show the command in a code block for manual execution
 
 ## Output Fields
 
