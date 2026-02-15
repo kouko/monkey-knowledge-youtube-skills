@@ -6,10 +6,10 @@ source "$(dirname "$0")/_ensure_jq.sh"
 
 URL="$1"
 LANG="${2:-}"  # Empty means auto-detect original language
-OUTPUT_DIR="/tmp/youtube-transcripts"
+OUTPUT_DIR="/tmp/youtube-captions"
 
 if [ -z "$URL" ]; then
-    echo "Usage: transcript.sh <url> [lang|auto]"
+    echo "Usage: caption.sh <url> [lang|auto]"
     exit 1
 fi
 

@@ -1,4 +1,4 @@
-# YouTube Transcript Skill
+# YouTube Caption Skill
 
 Download and extract subtitles/captions from YouTube videos.
 
@@ -13,7 +13,7 @@ This skill downloads subtitles from YouTube videos using `yt-dlp` and outputs JS
 ## File Structure
 
 ```
-youtube-get-transcript/
+youtube-get-caption/
 ├── SKILL.md              # Skill definition for Claude Code
 ├── README.md             # This file
 ├── bin/                  # Auto-downloaded binaries (initially empty)
@@ -21,7 +21,7 @@ youtube-get-transcript/
 └── scripts/
     ├── _ensure_ytdlp.sh  # Ensures yt-dlp is available
     ├── _ensure_jq.sh     # Ensures jq is available
-    └── transcript.sh     # Main transcript script
+    └── caption.sh        # Main caption script
 ```
 
 ## Dependencies
@@ -33,12 +33,12 @@ youtube-get-transcript/
 | sed | Text processing | Pre-installed |
 | curl/wget | Download binaries | Required (pre-installed) |
 
-## Script: `transcript.sh`
+## Script: `caption.sh`
 
 ### Usage
 
 ```bash
-./scripts/transcript.sh "<URL>" [language|auto]
+./scripts/caption.sh "<URL>" [language|auto]
 ```
 
 ### Parameters
@@ -77,8 +77,8 @@ youtube-get-transcript/
 ```json
 {
   "status": "success",
-  "file_path": "/tmp/youtube-transcripts/VIDEO_ID.en.srt",
-  "text_file_path": "/tmp/youtube-transcripts/VIDEO_ID.en.txt",
+  "file_path": "/tmp/youtube-captions/VIDEO_ID.en.srt",
+  "text_file_path": "/tmp/youtube-captions/VIDEO_ID.en.txt",
   "language": "en",
   "subtitle_type": "manual",
   "char_count": 30287,
@@ -115,23 +115,23 @@ youtube-get-transcript/
 
 ```bash
 # Auto-detect original language (recommended)
-./scripts/transcript.sh "https://www.youtube.com/watch?v=xxx"
+./scripts/caption.sh "https://www.youtube.com/watch?v=xxx"
 
 # Explicitly use auto-detection
-./scripts/transcript.sh "https://www.youtube.com/watch?v=xxx" auto
+./scripts/caption.sh "https://www.youtube.com/watch?v=xxx" auto
 
 # Download Japanese subtitles
-./scripts/transcript.sh "https://www.youtube.com/watch?v=xxx" ja
+./scripts/caption.sh "https://www.youtube.com/watch?v=xxx" ja
 
 # Download with language priority
-./scripts/transcript.sh "https://www.youtube.com/watch?v=xxx" "zh-TW,zh-Hant,en"
+./scripts/caption.sh "https://www.youtube.com/watch?v=xxx" "zh-TW,zh-Hant,en"
 ```
 
 ## How It Works
 
 ```
 ┌─────────────────────┐
-│   transcript.sh     │
+│     caption.sh      │
 └──────────┬──────────┘
            │
            ▼
@@ -193,8 +193,8 @@ The `subtitle_type` field in the output indicates which type was downloaded.
 
 | Location | Purpose |
 |----------|---------|
-| `/tmp/youtube-transcripts/*.srt` | Downloaded SRT subtitle files |
-| `/tmp/youtube-transcripts/*.txt` | Plain text version (no timestamps) |
+| `/tmp/youtube-captions/*.srt` | Downloaded SRT subtitle files |
+| `/tmp/youtube-captions/*.txt` | Plain text version (no timestamps) |
 
 **Note**: Files in `/tmp/` are cleared on system reboot.
 

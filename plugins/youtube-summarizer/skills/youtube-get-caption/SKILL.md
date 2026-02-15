@@ -1,34 +1,34 @@
 ---
-name: youtube-get-transcript
-description: Download YouTube video subtitles. Use when user wants to get transcript or captions from a video.
+name: youtube-get-caption
+description: Download YouTube video subtitles. Use when user wants to get captions or subtitles from a video.
 license: MIT
 metadata:
   version: 1.1.0
   author: kouko
   tags:
     - youtube
-    - transcript
+    - caption
     - subtitle
 compatibility:
   claude-code: ">=1.0.0"
 ---
 
-# YouTube Transcript Download
+# YouTube Caption Download
 
 Download video subtitles and display content. Automatically detects video's original language and distinguishes between manual and auto-generated subtitles.
 
 ## Quick Start
 
 ```
-/youtube-get-transcript <URL> [language|auto]
+/youtube-get-caption <URL> [language|auto]
 ```
 
 ## Examples
 
-- `/youtube-get-transcript https://youtube.com/watch?v=xxx` - Auto-detect original language
-- `/youtube-get-transcript https://youtube.com/watch?v=xxx auto` - Explicitly use original language
-- `/youtube-get-transcript https://youtube.com/watch?v=xxx ja` - Download Japanese subtitles
-- `/youtube-get-transcript https://youtube.com/watch?v=xxx "zh-TW,en"` - Language priority list
+- `/youtube-get-caption https://youtube.com/watch?v=xxx` - Auto-detect original language
+- `/youtube-get-caption https://youtube.com/watch?v=xxx auto` - Explicitly use original language
+- `/youtube-get-caption https://youtube.com/watch?v=xxx ja` - Download Japanese subtitles
+- `/youtube-get-caption https://youtube.com/watch?v=xxx "zh-TW,en"` - Language priority list
 
 ## Language Options
 
@@ -41,7 +41,7 @@ Download video subtitles and display content. Automatically detects video's orig
 
 ## How it Works
 
-1. Execute: `{baseDir}/scripts/transcript.sh "<URL>" "<language>"`
+1. Execute: `{baseDir}/scripts/caption.sh "<URL>" "<language>"`
 2. If no language specified, detect video's original language
 3. Try to download manual (author-uploaded) subtitles first
 4. If unavailable, fall back to auto-generated subtitles
@@ -54,8 +54,8 @@ Success:
 ```json
 {
   "status": "success",
-  "file_path": "/tmp/youtube-get-transcripts/VIDEO_ID.en.srt",
-  "text_file_path": "/tmp/youtube-get-transcripts/VIDEO_ID.en.txt",
+  "file_path": "/tmp/youtube-captions/VIDEO_ID.en.srt",
+  "text_file_path": "/tmp/youtube-captions/VIDEO_ID.en.txt",
   "language": "en",
   "subtitle_type": "manual",
   "char_count": 30287,
@@ -92,3 +92,13 @@ Error:
 - Some videos may not have subtitles
 - Manual subtitles are prioritized over auto-generated ones
 - Auto-generated subtitles may be less accurate
+
+## Next Step
+
+After downloading the caption, invoke `/transcript-summarize` with the `text_file_path` from the output to generate a structured summary:
+
+```
+/transcript-summarize <text_file_path>
+```
+
+**IMPORTANT**: Always use the Skill tool to invoke `/transcript-summarize`. Do NOT generate summaries directly without loading the skill — it contains critical rules for compression ratio, section structure, data preservation, and language handling.

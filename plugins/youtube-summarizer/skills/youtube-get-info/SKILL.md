@@ -1,6 +1,6 @@
 ---
 name: youtube-get-info
-description: Get YouTube video info and summarize content. Use when user provides a YouTube URL and wants video details or summary.
+description: Get YouTube video metadata (title, channel, duration, views, subtitle availability). Use when user wants video details or needs to check subtitle availability before summarization.
 license: MIT
 metadata:
   version: 1.0.0
@@ -80,3 +80,12 @@ Get video details and generate content summary.
 ## Notes
 
 - On first run, if yt-dlp or jq is not installed, it will be auto-downloaded
+
+## Next Step
+
+After obtaining video info, determine the summarization path based on subtitle availability:
+
+- **If `has_subtitles: true` or `has_auto_captions: true`**: Invoke `/youtube-get-caption` to download subtitles
+- **If both are `false`**: Invoke `/youtube-get-audio` to download audio for transcription
+
+To generate a complete summary, always follow the full pipeline — do NOT skip directly to summarization without first obtaining a transcript through one of the above paths.

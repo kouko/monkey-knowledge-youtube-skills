@@ -8,9 +8,9 @@ Claude Code plugin for YouTube video tools - search, info, transcript, audio dow
 |-------|-------------|-------|
 | `/youtube-search` | Search YouTube videos | `/youtube-search <query> [count]` |
 | `/youtube-info` | Get video info and summary | `/youtube-info <url>` |
-| `/youtube-transcript` | Download subtitles | `/youtube-transcript <url> [lang]` |
+| `/youtube-caption` | Download subtitles | `/youtube-caption <url> [lang]` |
 | `/youtube-audio` | Download audio (MP3) | `/youtube-audio <url> [output_dir]` |
-| `/transcript-summary` | Structured video summary | `/transcript-summary <transcript_file_path>` |
+| `/transcript-summarize` | Structured video summary | `/transcript-summarize <transcript_file_path>` |
 
 ## Features
 
@@ -43,13 +43,13 @@ plugins/youtube-summarizer/
 │   │       ├── _ensure_ytdlp.sh
 │   │       ├── _ensure_jq.sh
 │   │       └── info.sh
-│   ├── youtube-transcript/
+│   ├── youtube-caption/
 │   │   ├── SKILL.md
 │   │   ├── README.md
 │   │   ├── bin/
 │   │   └── scripts/
 │   │       ├── _ensure_ytdlp.sh
-│   │       └── transcript.sh
+│   │       └── caption.sh
 │   ├── youtube-audio/
 │   │   ├── SKILL.md
 │   │   ├── README.md
@@ -58,7 +58,7 @@ plugins/youtube-summarizer/
 │   │       ├── _ensure_ytdlp.sh
 │   │       ├── _ensure_jq.sh
 │   │       └── audio.sh
-│   └── transcript-summary/
+│   └── transcript-summarize/
 │       ├── SKILL.md
 │       ├── README.md
 │       ├── bin/
@@ -150,12 +150,12 @@ plugins/youtube-summarizer/
 }
 ```
 
-### youtube-transcript
+### youtube-caption
 
 ```json
 {
   "status": "success",
-  "file_path": "/tmp/youtube-transcripts/VIDEO_ID.en.srt",
+  "file_path": "/tmp/youtube-captions/VIDEO_ID.en.srt",
   "language": "en",
   "content": "transcript text content..."
 }
@@ -171,12 +171,12 @@ plugins/youtube-summarizer/
 }
 ```
 
-### transcript-summary
+### transcript-summarize
 
 ```json
 {
   "status": "success",
-  "file_path": "/tmp/youtube-transcripts/VIDEO_ID.en.txt",
+  "file_path": "/tmp/youtube-captions/VIDEO_ID.en.txt",
   "char_count": 30000,
   "line_count": 450,
   "strategy": "standard"
@@ -203,10 +203,10 @@ plugins/youtube-summarizer/
 /youtube-info https://www.youtube.com/watch?v=dQw4w9WgXcQ
 
 # Download subtitles (English)
-/youtube-transcript https://www.youtube.com/watch?v=xxx
+/youtube-caption https://www.youtube.com/watch?v=xxx
 
 # Download subtitles (Japanese)
-/youtube-transcript https://www.youtube.com/watch?v=xxx ja
+/youtube-caption https://www.youtube.com/watch?v=xxx ja
 
 # Download audio to default location
 /youtube-audio https://www.youtube.com/watch?v=xxx
@@ -215,13 +215,13 @@ plugins/youtube-summarizer/
 /youtube-audio https://www.youtube.com/watch?v=xxx ~/Music
 
 # Summarize from a transcript file (typical two-step workflow)
-/youtube-transcript https://www.youtube.com/watch?v=xxx
-/transcript-summary /tmp/youtube-transcripts/VIDEO_ID.en.txt
+/youtube-caption https://www.youtube.com/watch?v=xxx
+/transcript-summarize /tmp/youtube-captions/VIDEO_ID.en.txt
 
 # Summarize with metadata (three-step workflow)
 /youtube-info https://www.youtube.com/watch?v=xxx
-/youtube-transcript https://www.youtube.com/watch?v=xxx
-/transcript-summary /tmp/youtube-transcripts/VIDEO_ID.en.txt
+/youtube-caption https://www.youtube.com/watch?v=xxx
+/transcript-summarize /tmp/youtube-captions/VIDEO_ID.en.txt
 ```
 
 ## Workflow: Video Summarization
@@ -233,7 +233,7 @@ plugins/youtube-summarizer/
          │
          ▼
 ┌──────────────────┐   ┌──────────────────┐
-│ /youtube-info    │   │/youtube-transcript│ ← Run independently
+│ /youtube-info    │   │/youtube-caption│ ← Run independently
 │ (optional)       │   │ (required)       │
 └────────┬─────────┘   └────────┬─────────┘
          │                      │
@@ -255,7 +255,7 @@ plugins/youtube-summarizer/
            └──────────────┘
 
 Alternative (for videos without subtitles):
-  /youtube-audio → Speech-to-Text → /transcript-summary (inline text)
+  /youtube-audio → Speech-to-Text → /transcript-summarize (inline text)
 ```
 
 ## Troubleshooting
