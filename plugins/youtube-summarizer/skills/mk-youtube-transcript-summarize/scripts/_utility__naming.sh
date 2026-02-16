@@ -115,11 +115,14 @@ extract_video_id_from_url() {
     local url="$1"
     local video_id=""
 
+    # Store regex in variable for bash 3.2 compatibility (inline [?&] fails)
+    local watch_re='[?&]v=([a-zA-Z0-9_-]{11})'
+
     # youtu.be/VIDEO_ID
     if [[ "$url" =~ youtu\.be/([a-zA-Z0-9_-]{11}) ]]; then
         video_id="${BASH_REMATCH[1]}"
     # youtube.com/watch?v=VIDEO_ID
-    elif [[ "$url" =~ [?&]v=([a-zA-Z0-9_-]{11}) ]]; then
+    elif [[ "$url" =~ $watch_re ]]; then
         video_id="${BASH_REMATCH[1]}"
     # youtube.com/shorts/VIDEO_ID or /embed/VIDEO_ID or /v/VIDEO_ID
     elif [[ "$url" =~ /(shorts|embed|v)/([a-zA-Z0-9_-]{11}) ]]; then
