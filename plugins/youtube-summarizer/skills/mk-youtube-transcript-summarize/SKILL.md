@@ -25,8 +25,8 @@ Generate a structured, high-quality summary of a YouTube video from its transcri
 
 ## Examples
 
-- `/mk-youtube-transcript-summarize /tmp/youtube-captions/dQw4w9WgXcQ.en.txt`
-- `/mk-youtube-transcript-summarize /tmp/youtube-audio-transcribe/video.txt`
+- `/mk-youtube-transcript-summarize /tmp/youtube-captions/dQw4w9WgXcQ__Video_Title.en.txt`
+- `/mk-youtube-transcript-summarize /tmp/youtube-audio-transcribe/dQw4w9WgXcQ__Video_Title.txt`
 
 **Typical workflow:**
 
@@ -34,8 +34,8 @@ Generate a structured, high-quality summary of a YouTube video from its transcri
 /mk-youtube-get-caption https://youtube.com/watch?v=xxx
 → outputs transcript file path
 
-/mk-youtube-transcript-summarize /tmp/youtube-captions/VIDEO_ID.en.txt
-→ generates structured summary
+/mk-youtube-transcript-summarize /tmp/youtube-captions/VIDEO_ID__Title.en.txt
+→ generates structured summary saved to /tmp/youtube-summaries/VIDEO_ID__Title.en.md
 ```
 
 ## How it Works
@@ -115,6 +115,7 @@ After obtaining the transcript, generate the summary using EXACTLY this structur
 | **Views** | {view_count, formatted with commas} |
 | **Upload Date** | {upload_date, formatted as YYYY-MM-DD} |
 | **Subtitle** | {subtitle_type} ({transcript_language}) |
+| **URL** | {url} |
 
 ## Content Summary
 
@@ -179,16 +180,16 @@ After obtaining the transcript, generate the summary using EXACTLY this structur
 After generating the summary, save it using the Write tool:
 
 - **Output directory**: `/tmp/youtube-summaries/`
-- **Filename**: `<transcript_basename>.md`
+- **Filename**: `<transcript_basename>.md` (preserves unified naming format)
 
 **Example:**
-- Input: `/tmp/youtube-captions/dQw4w9WgXcQ.en.txt`
-- Output: `/tmp/youtube-summaries/dQw4w9WgXcQ.en.md`
+- Input: `/tmp/youtube-captions/dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.en.txt`
+- Output: `/tmp/youtube-summaries/dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.en.md`
 
 End your response with the file path:
 ```
 ---
-📄 Summary saved to: `/tmp/youtube-summaries/dQw4w9WgXcQ.en.md`
+📄 Summary saved to: `/tmp/youtube-summaries/dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.en.md`
 ```
 
 ## Output Format
@@ -197,13 +198,19 @@ Script JSON output:
 ```json
 {
   "status": "success",
-  "source_transcript": "/tmp/youtube-captions/VIDEO_ID.en.txt",
-  "output_summary": "/tmp/youtube-summaries/VIDEO_ID.en.md",
+  "source_transcript": "/tmp/youtube-captions/VIDEO_ID__Video_Title.en.txt",
+  "output_summary": "/tmp/youtube-summaries/VIDEO_ID__Video_Title.en.md",
   "char_count": 30000,
   "line_count": 450,
-  "strategy": "standard"
+  "strategy": "standard",
+  "video_id": "dQw4w9WgXcQ",
+  "title": "Video Title",
+  "channel": "Channel Name",
+  "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
 }
 ```
+
+The script automatically extracts video metadata from the centralized metadata store (`/tmp/youtube-video-meta/`) if available.
 
 ## Notes
 

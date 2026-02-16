@@ -4,7 +4,7 @@ Generate structured, high-quality summaries of YouTube videos from transcript te
 
 ## Overview
 
-This skill takes a transcript file path (or inline text) and produces a consistent, structured summary. It is fully independent — no dependency on sibling skills. Use `/mk-youtube-get-caption` separately to obtain a transcript file, then pass the file path to this skill.
+This skill takes a transcript file path and produces a consistent, structured summary. It is fully independent — no dependency on sibling skills. Use `/mk-youtube-get-caption` separately to obtain a transcript file, then pass the file path to this skill.
 
 ## File Structure
 
@@ -16,6 +16,7 @@ mk-youtube-transcript-summarize/
 │   └── .gitkeep
 └── scripts/
     ├── _ensure_jq.sh     # Ensures jq is available
+    ├── _naming.sh        # Unified naming and metadata functions
     └── summary.sh        # File validation script
 ```
 
@@ -45,11 +46,15 @@ mk-youtube-transcript-summarize/
 ```json
 {
   "status": "success",
-  "source_transcript": "/tmp/youtube-captions/VIDEO_ID.en.txt",
-  "output_summary": "/tmp/youtube-summaries/VIDEO_ID.en.md",
+  "source_transcript": "/tmp/youtube-captions/VIDEO_ID__Title.en.txt",
+  "output_summary": "/tmp/youtube-summaries/VIDEO_ID__Title.en.md",
   "char_count": 30000,
   "line_count": 450,
-  "strategy": "standard"
+  "strategy": "standard",
+  "video_id": "dQw4w9WgXcQ",
+  "title": "Video Title",
+  "channel": "Channel Name",
+  "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
 }
 ```
 
@@ -63,36 +68,38 @@ mk-youtube-transcript-summarize/
 | char_count | number | Character count of the file |
 | line_count | number | Line count of the file |
 | strategy | string | Processing strategy: `standard`, `sectioned`, or `chunked` |
+| video_id | string | YouTube video ID (from centralized metadata store) |
+| title | string | Video title (from centralized metadata store) |
+| channel | string | Channel name (from centralized metadata store) |
+| url | string | Full video URL (from centralized metadata store) |
 
 ## Examples
 
 ```bash
 # Validate a transcript file
-./scripts/summary.sh "/tmp/youtube-captions/dQw4w9WgXcQ.en.txt"
+./scripts/summary.sh "/tmp/youtube-captions/dQw4w9WgXcQ__Video_Title.en.txt"
 
 # Typical workflow in Claude Code
 # Step 1: Download transcript
 /mk-youtube-get-caption https://www.youtube.com/watch?v=xxx
 # Step 2: Summarize from the downloaded file
-/mk-youtube-transcript-summarize /tmp/youtube-captions/VIDEO_ID.en.txt
+/mk-youtube-transcript-summarize /tmp/youtube-captions/VIDEO_ID__Title.en.txt
 ```
 
 ## How It Works
 
 ```
-Mode A: File Path
-
-  /mk-youtube-transcript-summarize /tmp/youtube-captions/VIDEO_ID.en.txt
+  /mk-youtube-transcript-summarize /tmp/youtube-captions/VIDEO_ID__Title.en.txt
            │
            ▼
   ┌───────────────────┐
   │    summary.sh     │  ← Validate file + determine strategy
-  │  (file_path arg)  │
+  │  (file_path arg)  │     + read metadata from /tmp/youtube-video-meta/
   └────────┬──────────┘
            │
            ▼
   ┌───────────────────┐
-  │  JSON response    │  ← {status, source_transcript, output_summary, ...}
+  │  JSON response    │  ← {status, source_transcript, output_summary, metadata...}
   └────────┬──────────┘
            │
            ▼
@@ -110,18 +117,7 @@ Mode A: File Path
            ▼
   ┌───────────────────┐
   │  Structured       │  ← Following SKILL.md prompt rules
-  │  Summary Output   │
-  └───────────────────┘
-
-
-Mode B: Inline Text
-
-  User pastes transcript text in conversation
-           │
-           ▼
-  ┌───────────────────┐
-  │  Structured       │  ← Following SKILL.md prompt rules
-  │  Summary Output   │
+  │  Summary Output   │     Save to /tmp/youtube-summaries/
   └───────────────────┘
 ```
 

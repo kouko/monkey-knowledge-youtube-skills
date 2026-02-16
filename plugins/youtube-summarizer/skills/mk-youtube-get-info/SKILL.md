@@ -41,13 +41,16 @@ Get video details and generate content summary.
 
 ```json
 {
+  "video_id": "dQw4w9WgXcQ",
   "title": "Video Title",
   "channel": "Channel Name",
+  "channel_url": "https://www.youtube.com/channel/UCuAXFkgsw1L7xaCfnd5JJOw",
+  "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
   "duration_string": "10:30",
   "view_count": 1234567,
   "upload_date": "20240101",
   "language": "en",
-  "description": "Video description (first 1000 chars)",
+  "description": "Video description (first 500 chars)",
   "has_subtitles": true,
   "subtitle_languages": ["en", "ja", "zh-Hant"],
   "has_auto_captions": true,
@@ -59,17 +62,24 @@ Get video details and generate content summary.
 
 | Field | Description |
 |-------|-------------|
+| `video_id` | YouTube video ID |
 | `title` | Video title |
 | `channel` | Channel name |
+| `channel_url` | Channel URL |
+| `url` | Full video URL |
 | `duration_string` | Duration (e.g., "10:30") |
 | `view_count` | Number of views |
 | `upload_date` | Upload date (YYYYMMDD) |
 | `language` | Primary language (ISO 639-1 code) |
-| `description` | Video description (truncated to 1000 chars) |
+| `description` | Video description (truncated to 500 chars) |
 | `has_subtitles` | Whether manual subtitles exist |
 | `subtitle_languages` | Array of available subtitle language codes |
 | `has_auto_captions` | Whether auto-generated captions exist |
 | `auto_caption_count` | Number of auto-generated caption languages |
+
+### Centralized Metadata Store
+
+This skill automatically saves video metadata to `/tmp/youtube-video-meta/{video_id}__{title}.meta.json`. This metadata can be accessed by downstream skills (caption, audio, transcribe, summary) to include video information in their outputs.
 
 ### Content Summary
 (Generated from subtitle analysis)

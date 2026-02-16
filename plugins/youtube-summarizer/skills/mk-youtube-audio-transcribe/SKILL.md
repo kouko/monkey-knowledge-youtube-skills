@@ -88,15 +88,19 @@ Transcribe audio files to text using local whisper.cpp (no cloud API required).
 ```json
 {
   "status": "success",
-  "file_path": "/tmp/youtube-audio-transcribe/video.json",
-  "text_file_path": "/tmp/youtube-audio-transcribe/video.txt",
+  "file_path": "/tmp/youtube-audio-transcribe/VIDEO_ID__Video_Title.json",
+  "text_file_path": "/tmp/youtube-audio-transcribe/VIDEO_ID__Video_Title.txt",
   "language": "en",
   "duration": "3:32",
   "model": "medium",
   "char_count": 12345,
   "line_count": 100,
   "text_char_count": 10000,
-  "text_line_count": 50
+  "text_line_count": 50,
+  "video_id": "dQw4w9WgXcQ",
+  "title": "Video Title",
+  "channel": "Channel Name",
+  "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
 }
 ```
 
@@ -167,6 +171,16 @@ When you receive `MODEL_CORRUPTED` error:
 | `line_count` | Line count of JSON file |
 | `text_char_count` | Character count of plain text file |
 | `text_line_count` | Line count of plain text file |
+| `video_id` | YouTube video ID (from centralized metadata store) |
+| `title` | Video title (from centralized metadata store) |
+| `channel` | Channel name (from centralized metadata store) |
+| `url` | Full video URL (from centralized metadata store) |
+
+## Filename Format
+
+Output files preserve the input audio filename's unified naming format: `{video_id}__{sanitized_title}.{ext}`
+
+Example: `dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.json`
 
 ## JSON File Format
 

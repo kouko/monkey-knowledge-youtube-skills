@@ -23,6 +23,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/_ensure_ffmpeg.sh"
 source "$SCRIPT_DIR/_ensure_whisper.sh"
 source "$SCRIPT_DIR/_ensure_jq.sh"
+source "$SCRIPT_DIR/_naming.sh"
 
 AUDIO_FILE="$1"
 MODEL="${2:-auto}"
@@ -92,10 +93,35 @@ mkdir -p "$TEMP_DIR"
 OUTPUT_DIR="/tmp/youtube-audio-transcribe"
 mkdir -p "$OUTPUT_DIR"
 
-# Generate output filename from audio file
+# Generate output filename from audio file (preserving unified naming)
 BASENAME=$(basename "$AUDIO_FILE" | sed 's/\.[^.]*$//')
 JSON_OUTPUT="$OUTPUT_DIR/${BASENAME}.json"
 TEXT_OUTPUT="$OUTPUT_DIR/${BASENAME}.txt"
+
+# Extract video ID from filename (format: {id}__{title}.{ext})
+# Video ID is the part before the first "__"
+VIDEO_ID=$(echo "$BASENAME" | cut -d'_' -f1)
+if [[ "$BASENAME" == *"__"* ]]; then
+    VIDEO_ID="${BASENAME%%__*}"
+fi
+
+# Read metadata from centralized store (if available)
+EXISTING_META=""
+if [ -n "$VIDEO_ID" ]; then
+    EXISTING_META=$(read_meta "$VIDEO_ID")
+fi
+
+# Extract metadata fields (empty if not found)
+META_VIDEO_ID=""
+META_TITLE=""
+META_CHANNEL=""
+META_URL=""
+if [ -n "$EXISTING_META" ]; then
+    META_VIDEO_ID=$(echo "$EXISTING_META" | "$JQ" -r '.video_id // empty')
+    META_TITLE=$(echo "$EXISTING_META" | "$JQ" -r '.title // empty')
+    META_CHANNEL=$(echo "$EXISTING_META" | "$JQ" -r '.channel // empty')
+    META_URL=$(echo "$EXISTING_META" | "$JQ" -r '.url // empty')
+fi
 
 cleanup() {
     rm -rf "$TEMP_DIR"
@@ -176,6 +202,10 @@ TEXT_LINE_COUNT=$(wc -l < "$TEXT_OUTPUT" | tr -d ' ')
     --argjson line_count "$LINE_COUNT" \
     --argjson text_char_count "$TEXT_CHAR_COUNT" \
     --argjson text_line_count "$TEXT_LINE_COUNT" \
+    --arg video_id "$META_VIDEO_ID" \
+    --arg title "$META_TITLE" \
+    --arg channel "$META_CHANNEL" \
+    --arg url "$META_URL" \
     '{
         status: "success",
         file_path: $file_path,
@@ -186,5 +216,9 @@ TEXT_LINE_COUNT=$(wc -l < "$TEXT_OUTPUT" | tr -d ' ')
         char_count: $char_count,
         line_count: $line_count,
         text_char_count: $text_char_count,
-        text_line_count: $text_line_count
+        text_line_count: $text_line_count,
+        video_id: $video_id,
+        title: $title,
+        channel: $channel,
+        url: $url
     }'

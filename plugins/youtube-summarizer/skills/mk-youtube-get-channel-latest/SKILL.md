@@ -105,6 +105,12 @@ Get the latest content from a YouTube channel with type filtering.
 | live_status | string | Status: not_live, is_live, was_live, is_upcoming |
 | description | string | First 200 characters of description |
 
+## Centralized Metadata Store
+
+This skill automatically saves partial metadata for each video to `/tmp/youtube-video-meta/{video_id}__{title}.meta.json`. This metadata can be accessed by downstream skills (caption, audio, transcribe, summary).
+
+Note: This is partial metadata (marked `partial: true`). Running `/mk-youtube-get-info` on a specific video will update it with complete metadata.
+
 ## Notes
 
 - Auto-downloads yt-dlp and jq on first run

@@ -238,6 +238,199 @@ claude --plugin-dir /path/to/monkey-knowledge-skills/plugins/youtube-summarizer
 ## 範例 Plugin
 
 參考 `plugins/youtube-summarizer/` 的實作：
-- 6 個獨立 skills（search、get-info、get-transcript、get-audio、get-channel-latest、transcript-summary）
+- 8 個獨立 skills（search、get-info、get-caption、get-audio、get-channel-latest、audio-transcribe、transcript-summarize、summarize）
 - 智能依賴管理（yt-dlp、jq 自動下載）
 - 統一 JSON 輸出格式
+- 集中式 Metadata 儲存
+- 統一檔案命名規範
+
+---
+
+## YouTube Summarizer 架構規範
+
+以下規範適用於 `plugins/youtube-summarizer/` 內的所有 skills。
+
+### 集中式 Metadata 儲存
+
+所有 YouTube 影片的 metadata 統一儲存於 `/tmp/youtube-video-meta/`，供各 skill 共享存取。
+
+#### 目錄結構
+
+```
+/tmp/
+├── youtube-video-meta/           # 集中式 metadata 儲存
+│   └── {video_id}__{title}.meta.json
+├── youtube-captions/             # 字幕檔案
+│   └── {video_id}__{title}.{lang}.{srt|txt}
+├── youtube-audio/                # 音訊檔案
+│   └── {video_id}__{title}.{ext}
+├── youtube-audio-transcribe/     # 轉錄結果
+│   └── {video_id}__{title}.{json|txt}
+└── youtube-summaries/            # 摘要檔案
+    └── {video_id}__{title}.{lang}.md
+```
+
+#### Metadata JSON 格式
+
+`/tmp/youtube-video-meta/{video_id}__{title}.meta.json`：
+
+```json
+{
+  "video_id": "dQw4w9WgXcQ",
+  "title": "Rick Astley - Never Gonna Give You Up",
+  "channel": "Rick Astley",
+  "channel_url": "https://www.youtube.com/channel/UCuAXFkgsw1L7xaCfnd5JJOw",
+  "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+  "upload_date": "20091025",
+  "duration_string": "3:33",
+  "view_count": 1500000000,
+  "description": "...(前 500 字元)",
+  "language": "en",
+  "has_subtitles": true,
+  "has_auto_captions": true,
+  "source": "get-info",
+  "partial": false,
+  "fetched_at": "2024-01-15T10:30:00Z"
+}
+```
+
+#### 資料完整度管理
+
+| 欄位 | 說明 |
+|------|------|
+| `source` | 資料來源 skill：`get-info`、`channel-latest`、`caption`、`audio` |
+| `partial` | `true` = 部分資料，`false` = 完整資料 |
+
+#### 合併策略
+
+| 場景 | 處理方式 |
+|------|---------|
+| `channel-latest` → `get-info` | `channel-latest` 寫入 partial，`get-info` 更新為 complete |
+| `get-info` → `channel-latest` | `get-info` 已完整，`channel-latest` 不覆蓋 |
+| `caption`/`audio` 自行提取 | 檔案不存在時建立，存在時只讀取 |
+
+### 統一檔案命名規範
+
+#### 命名格式
+
+```
+{video_id}__{sanitized_title}.{content_type}.{extension}
+```
+
+#### 命名範例
+
+| 檔案類型 | 命名範例 |
+|---------|---------|
+| Metadata | `dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.meta.json` |
+| 字幕 (SRT) | `dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.en.srt` |
+| 字幕 (TXT) | `dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.en.txt` |
+| 音訊 | `dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.m4a` |
+| 轉錄 (JSON) | `dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.json` |
+| 轉錄 (TXT) | `dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.txt` |
+| 摘要 | `dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.en.md` |
+
+#### Title 清理規則
+
+```bash
+sanitize_title() {
+    local title="$1"
+    local max_length="${2:-80}"
+
+    echo "$title" | \
+        tr '\n\r' ' ' |                    # 換行 → 空格
+        tr -d '/:*?"<>|\\' |               # 移除檔案系統禁用字元
+        tr -s ' ' '_' |                    # 連續空格 → 單底線
+        sed 's/^_//; s/_$//' |             # 移除首尾底線
+        cut -c1-"$max_length"              # 截斷長度
+}
+```
+
+#### 長度限制
+
+| 組成 | 長度 |
+|------|------|
+| Video ID | 11 字元（固定） |
+| 分隔符 | 2 字元（`__`） |
+| Title | 最多 80 字元 |
+| Content type + ext | 最多 20 字元 |
+| **總計** | ≤ 113 字元 ✅ |
+
+### 共用函式庫 `_naming.sh`
+
+每個需要使用統一命名或 metadata 的 skill 需在 `scripts/` 目錄下包含 `_naming.sh`。
+
+#### 提供的函式
+
+| 函式 | 用途 |
+|------|------|
+| `sanitize_title "$TITLE" [max_length]` | 清理標題用於檔案名稱 |
+| `make_basename "$VIDEO_ID" "$TITLE"` | 生成統一檔案名稱基底 |
+| `write_or_merge_meta "$FILE" "$JSON" "$IS_PARTIAL"` | 寫入或合併 metadata |
+| `find_meta_by_id "$VIDEO_ID"` | 依 video_id 尋找 metadata 檔案 |
+| `read_meta "$VIDEO_ID"` | 讀取 metadata JSON |
+
+#### 使用方式
+
+```bash
+source "$(dirname "$0")/_naming.sh"
+
+# 生成檔名
+BASENAME=$(make_basename "$VIDEO_ID" "$TITLE")
+# 輸出: dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up
+
+# 讀取 metadata
+EXISTING_META=$(read_meta "$VIDEO_ID")
+
+# 寫入 metadata（partial = true 表示部分資料）
+write_or_merge_meta "$META_DIR/$BASENAME.meta.json" "$META_JSON" "true"
+```
+
+### Skill JSON 輸出規範
+
+所有 skill 的 JSON 輸出應包含 metadata 欄位：
+
+```json
+{
+  "status": "success",
+  "file_path": "/tmp/youtube-audio/VIDEO_ID__Title.m4a",
+  "video_id": "dQw4w9WgXcQ",
+  "title": "Video Title",
+  "channel": "Channel Name",
+  "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+}
+```
+
+### 資料流架構
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                 Centralized Metadata Store                       │
+│                 /tmp/youtube-video-meta/                         │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  ┌──────────────┐   ┌────────────────────┐                      │
+│  │ get-info     │──▶│ 寫入完整 metadata   │ (partial: false)     │
+│  └──────────────┘   └────────────────────┘                      │
+│                                                                  │
+│  ┌──────────────────┐   ┌────────────────────┐                  │
+│  │ channel-latest   │──▶│ 批次寫入部分 meta  │ (partial: true)    │
+│  └──────────────────┘   └────────────────────┘                  │
+│                                                                  │
+│  ┌──────────────┐   ┌────────────────────┐                      │
+│  │ get-caption  │──▶│ 讀取或提取 metadata │ → 寫入 partial       │
+│  └──────────────┘   └────────────────────┘                      │
+│                                                                  │
+│  ┌──────────────┐   ┌────────────────────┐                      │
+│  │ get-audio    │──▶│ 讀取或提取 metadata │ → 寫入 partial       │
+│  └──────────────┘   └────────────────────┘                      │
+│                                                                  │
+│  ┌──────────────┐   ┌────────────────────┐                      │
+│  │ transcribe   │──▶│ 從檔名提取 ID       │ → 讀取 metadata      │
+│  └──────────────┘   └────────────────────┘                      │
+│                                                                  │
+│  ┌──────────────┐   ┌────────────────────┐                      │
+│  │ summarize    │──▶│ 從檔名提取 ID       │ → 讀取 metadata      │
+│  └──────────────┘   └────────────────────┘                      │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```

@@ -1,8 +1,9 @@
 #!/bin/bash
 set -e
 
-# Load dependency
+# Load dependencies
 source "$(dirname "$0")/_ensure_jq.sh"
+source "$(dirname "$0")/_naming.sh"
 
 FILE_PATH="$1"
 
@@ -36,7 +37,30 @@ fi
 
 # Calculate output summary path
 BASENAME=$(basename "$ABS_PATH")
-OUTPUT_SUMMARY="/tmp/youtube-summaries/${BASENAME%.*}.md"
+BASENAME_NO_EXT="${BASENAME%.*}"
+OUTPUT_SUMMARY="/tmp/youtube-summaries/${BASENAME_NO_EXT}.md"
+
+# Extract video ID from filename (format: {id}__{title}.{lang}.{ext})
+# Video ID is the part before the first "__"
+VIDEO_ID=""
+if [[ "$BASENAME_NO_EXT" == *"__"* ]]; then
+    VIDEO_ID="${BASENAME_NO_EXT%%__*}"
+fi
+
+# Read metadata from centralized store (if available)
+META_VIDEO_ID=""
+META_TITLE=""
+META_CHANNEL=""
+META_URL=""
+if [ -n "$VIDEO_ID" ]; then
+    EXISTING_META=$(read_meta "$VIDEO_ID")
+    if [ -n "$EXISTING_META" ]; then
+        META_VIDEO_ID=$(echo "$EXISTING_META" | "$JQ" -r '.video_id // empty')
+        META_TITLE=$(echo "$EXISTING_META" | "$JQ" -r '.title // empty')
+        META_CHANNEL=$(echo "$EXISTING_META" | "$JQ" -r '.channel // empty')
+        META_URL=$(echo "$EXISTING_META" | "$JQ" -r '.url // empty')
+    fi
+fi
 
 "$JQ" -n \
     --arg status "success" \
@@ -45,4 +69,19 @@ OUTPUT_SUMMARY="/tmp/youtube-summaries/${BASENAME%.*}.md"
     --argjson char_count "$CHAR_COUNT" \
     --argjson line_count "$LINE_COUNT" \
     --arg strategy "$STRATEGY" \
-    '{status: $status, source_transcript: $source_transcript, output_summary: $output_summary, char_count: $char_count, line_count: $line_count, strategy: $strategy}'
+    --arg video_id "$META_VIDEO_ID" \
+    --arg title "$META_TITLE" \
+    --arg channel "$META_CHANNEL" \
+    --arg url "$META_URL" \
+    '{
+        status: $status,
+        source_transcript: $source_transcript,
+        output_summary: $output_summary,
+        char_count: $char_count,
+        line_count: $line_count,
+        strategy: $strategy,
+        video_id: $video_id,
+        title: $title,
+        channel: $channel,
+        url: $url
+    }'

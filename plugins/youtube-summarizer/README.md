@@ -22,6 +22,8 @@ Claude Code plugin for YouTube video tools - search, info, transcript, audio dow
 - **Lightweight**: No pre-bundled binaries, downloads on first use
 - **Independent skills**: Each skill is self-contained with its own dependencies
 - **LLM-friendly output**: JSON output for easy parsing
+- **Centralized metadata storage**: Video metadata shared across all skills via `/tmp/youtube-video-meta/`
+- **Unified filename convention**: All files use `{video_id}__{sanitized_title}.{ext}` format
 
 ## Project Structure
 
@@ -95,7 +97,101 @@ plugins/youtube-summarizer/
 └─────────────────────────────────────────────────────┘
 ```
 
+## Centralized Metadata Storage
+
+All video metadata is stored in `/tmp/youtube-video-meta/` for cross-skill access.
+
+### Directory Structure
+
+```
+/tmp/
+├── youtube-video-meta/           # Centralized metadata store
+│   └── {video_id}__{title}.meta.json
+├── youtube-captions/             # Subtitle files
+│   └── {video_id}__{title}.{lang}.{srt|txt}
+├── youtube-audio/                # Audio files
+│   └── {video_id}__{title}.{ext}
+├── youtube-audio-transcribe/     # Transcription results
+│   └── {video_id}__{title}.{json|txt}
+└── youtube-summaries/            # Summary files
+    └── {video_id}__{title}.{lang}.md
+```
+
+### Metadata Merge Strategy
+
+| Scenario | Behavior |
+|----------|----------|
+| `channel-latest` → `get-info` | `channel-latest` writes partial, `get-info` updates to complete |
+| `get-info` → `channel-latest` | `get-info` is complete, `channel-latest` won't overwrite |
+| `caption`/`audio` self-extract | Creates if not exists, reads only if exists |
+
+### Data Flow
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                 Centralized Metadata Store                       │
+│                 /tmp/youtube-video-meta/                         │
+├─────────────────────────────────────────────────────────────────┤
+│  ┌──────────────┐                                                │
+│  │ get-info     │──▶ Writes complete metadata (partial: false)   │
+│  └──────────────┘                                                │
+│  ┌──────────────────┐                                            │
+│  │ channel-latest   │──▶ Batch writes partial metadata           │
+│  └──────────────────┘                                            │
+│  ┌──────────────┐                                                │
+│  │ get-caption  │──▶ Reads existing or creates partial metadata  │
+│  │ get-audio    │                                                │
+│  └──────────────┘                                                │
+│  ┌──────────────┐                                                │
+│  │ transcribe   │──▶ Extracts video ID from filename → reads     │
+│  │ summarize    │                                                │
+│  └──────────────┘                                                │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+## Unified Filename Convention
+
+All generated files use a consistent naming format for easy identification and cross-skill compatibility.
+
+### Format
+
+```
+{video_id}__{sanitized_title}.{content_type}.{extension}
+```
+
+### Examples
+
+| File Type | Example |
+|-----------|---------|
+| Metadata | `dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.meta.json` |
+| Caption (SRT) | `dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.en.srt` |
+| Caption (TXT) | `dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.en.txt` |
+| Audio | `dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.m4a` |
+| Transcript (JSON) | `dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.json` |
+| Transcript (TXT) | `dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.txt` |
+| Summary | `dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.en.md` |
+
+### Title Sanitization Rules
+
+- Replace newlines/carriage returns with spaces
+- Remove filesystem-unsafe characters: `/:*?"<>|\`
+- Replace consecutive spaces with single underscore
+- Remove leading/trailing underscores
+- Truncate to 80 characters maximum
+
+### Length Limits
+
+| Component | Length |
+|-----------|--------|
+| Video ID | 11 chars (fixed) |
+| Separator | 2 chars (`__`) |
+| Title | max 80 chars |
+| Content type + ext | max 20 chars |
+| **Total** | ≤ 113 chars ✅ |
+
 ## Output Formats
+
+All skills include video metadata in their JSON output when available.
 
 ### mk-youtube-search
 
@@ -114,12 +210,15 @@ plugins/youtube-summarizer/
 
 ```json
 {
+  "video_id": "dQw4w9WgXcQ",
   "title": "Video Title",
   "channel": "Channel Name",
+  "channel_url": "https://www.youtube.com/channel/...",
+  "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
   "duration_string": "10:23",
   "view_count": 1234567,
   "upload_date": "20240101",
-  "description": "Video description..."
+  "description": "Video description (first 500 chars)..."
 }
 ```
 
@@ -128,10 +227,14 @@ plugins/youtube-summarizer/
 ```json
 {
   "status": "success",
-  "file_path": "/tmp/youtube-captions/VIDEO_ID.en.srt",
-  "text_file_path": "/tmp/youtube-captions/VIDEO_ID.en.txt",
+  "file_path": "/tmp/youtube-captions/VIDEO_ID__Video_Title.en.srt",
+  "text_file_path": "/tmp/youtube-captions/VIDEO_ID__Video_Title.en.txt",
   "language": "en",
-  "subtitle_type": "manual"
+  "subtitle_type": "manual",
+  "video_id": "dQw4w9WgXcQ",
+  "title": "Video Title",
+  "channel": "Channel Name",
+  "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
 }
 ```
 
@@ -140,8 +243,30 @@ plugins/youtube-summarizer/
 ```json
 {
   "status": "success",
-  "file_path": "/tmp/youtube-audio/video_title.m4a",
-  "file_size": "5.2M"
+  "file_path": "/tmp/youtube-audio/VIDEO_ID__Video_Title.m4a",
+  "file_size": "5.2M",
+  "video_id": "dQw4w9WgXcQ",
+  "title": "Video Title",
+  "channel": "Channel Name",
+  "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+  "duration_string": "3:32"
+}
+```
+
+### mk-youtube-audio-transcribe
+
+```json
+{
+  "status": "success",
+  "file_path": "/tmp/youtube-audio-transcribe/VIDEO_ID__Video_Title.json",
+  "text_file_path": "/tmp/youtube-audio-transcribe/VIDEO_ID__Video_Title.txt",
+  "language": "en",
+  "duration": "3:32",
+  "model": "medium",
+  "video_id": "dQw4w9WgXcQ",
+  "title": "Video Title",
+  "channel": "Channel Name",
+  "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
 }
 ```
 
@@ -150,11 +275,15 @@ plugins/youtube-summarizer/
 ```json
 {
   "status": "success",
-  "source_transcript": "/tmp/youtube-captions/VIDEO_ID.en.txt",
-  "output_summary": "/tmp/youtube-summaries/VIDEO_ID.en.md",
+  "source_transcript": "/tmp/youtube-captions/VIDEO_ID__Video_Title.en.txt",
+  "output_summary": "/tmp/youtube-summaries/VIDEO_ID__Video_Title.en.md",
   "char_count": 30000,
   "line_count": 450,
-  "strategy": "standard"
+  "strategy": "standard",
+  "video_id": "dQw4w9WgXcQ",
+  "title": "Video Title",
+  "channel": "Channel Name",
+  "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
 }
 ```
 
@@ -174,7 +303,7 @@ plugins/youtube-summarizer/
 # Search for videos
 /mk-youtube-search "AI tutorial" 5
 
-# Get video info
+# Get video info (saves metadata to /tmp/youtube-video-meta/)
 /mk-youtube-get-info https://www.youtube.com/watch?v=dQw4w9WgXcQ
 
 # Download subtitles (English)
@@ -194,7 +323,7 @@ plugins/youtube-summarizer/
 
 # Manual workflow: caption → summarize
 /mk-youtube-get-caption https://www.youtube.com/watch?v=xxx
-/mk-youtube-transcript-summarize /tmp/youtube-captions/VIDEO_ID.en.txt
+/mk-youtube-transcript-summarize /tmp/youtube-captions/VIDEO_ID__Video_Title.en.txt
 ```
 
 ## Workflow: Video Summarization

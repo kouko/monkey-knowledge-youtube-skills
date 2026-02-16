@@ -75,8 +75,13 @@ Success:
 ```json
 {
   "status": "success",
-  "file_path": "/tmp/youtube-audio/video_title.m4a",
-  "file_size": "5.2M"
+  "file_path": "/tmp/youtube-audio/VIDEO_ID__Video_Title.m4a",
+  "file_size": "5.2M",
+  "video_id": "dQw4w9WgXcQ",
+  "title": "Video Title",
+  "channel": "Channel Name",
+  "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+  "duration_string": "3:32"
 }
 ```
 
@@ -87,6 +92,12 @@ Error:
   "message": "Download failed (tried with and without cookies)"
 }
 ```
+
+## Filename Format
+
+Files use unified naming: `{video_id}__{sanitized_title}.{ext}`
+
+Example: `dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.m4a`
 
 ## Browser Cookie Fallback
 

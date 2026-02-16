@@ -54,14 +54,18 @@ Success:
 ```json
 {
   "status": "success",
-  "file_path": "/tmp/youtube-captions/VIDEO_ID.en.srt",
-  "text_file_path": "/tmp/youtube-captions/VIDEO_ID.en.txt",
+  "file_path": "/tmp/youtube-captions/VIDEO_ID__Video_Title.en.srt",
+  "text_file_path": "/tmp/youtube-captions/VIDEO_ID__Video_Title.en.txt",
   "language": "en",
   "subtitle_type": "manual",
   "char_count": 30287,
   "line_count": 1555,
   "text_char_count": 25000,
-  "text_line_count": 800
+  "text_line_count": 800,
+  "video_id": "dQw4w9WgXcQ",
+  "title": "Video Title",
+  "channel": "Channel Name",
+  "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
 }
 ```
 
@@ -85,6 +89,16 @@ Error:
 | `line_count` | Number of lines in the SRT file |
 | `text_char_count` | Number of characters in the plain text file |
 | `text_line_count` | Number of lines in the plain text file |
+| `video_id` | YouTube video ID |
+| `title` | Video title |
+| `channel` | Channel name |
+| `url` | Full video URL |
+
+## Filename Format
+
+Files use unified naming: `{video_id}__{sanitized_title}.{lang}.{ext}`
+
+Example: `dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.en.srt`
 
 ## Notes
 

@@ -4,6 +4,7 @@ set -e
 # Load dependencies
 source "$(dirname "$0")/_ensure_ytdlp.sh"
 source "$(dirname "$0")/_ensure_jq.sh"
+source "$(dirname "$0")/_naming.sh"
 
 CHANNEL="$1"
 LIMIT="${2:-10}"
@@ -106,8 +107,8 @@ if [ -z "$RESULT" ]; then
     exit 1
 fi
 
-# Parse, deduplicate by id, sort by upload_date desc, and limit results
-echo "$RESULT" | "$JQ" -s --argjson limit "$LIMIT" '
+# Parse, deduplicate, sort, and limit results
+FINAL_OUTPUT=$(echo "$RESULT" | "$JQ" -s --argjson limit "$LIMIT" '
     map({
         id,
         title,
@@ -122,4 +123,33 @@ echo "$RESULT" | "$JQ" -s --argjson limit "$LIMIT" '
     | unique_by(.id)
     | sort_by(.upload_date) | reverse
     | .[:$limit]
-'
+')
+
+# Write metadata for each video to centralized store (partial data, won't overwrite complete)
+mkdir -p "$META_DIR"
+echo "$FINAL_OUTPUT" | "$JQ" -c '.[]' | while read -r line; do
+    VIDEO_ID=$(echo "$line" | "$JQ" -r '.id')
+    TITLE=$(echo "$line" | "$JQ" -r '.title')
+    BASENAME=$(make_basename "$VIDEO_ID" "$TITLE")
+
+    META_JSON=$(echo "$line" | "$JQ" '{
+        video_id: .id,
+        title,
+        channel,
+        url,
+        upload_date,
+        duration_string,
+        view_count,
+        description,
+        live_status,
+        source: "channel-latest",
+        partial: true,
+        fetched_at: (now | todate)
+    }')
+
+    # partial data won't overwrite complete data
+    write_or_merge_meta "$META_DIR/$BASENAME.meta.json" "$META_JSON" "true"
+done
+
+# Output the final JSON array
+echo "$FINAL_OUTPUT"
