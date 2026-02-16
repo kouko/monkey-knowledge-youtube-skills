@@ -1,11 +1,14 @@
 #!/bin/bash
-# _ensure_ytdlp.sh - Ensure yt-dlp is available (detection only, no auto-download)
+# _ensure_ytdlp.sh - Ensure yt-dlp is available
 #
 # Checks for yt-dlp in:
 #   1. System PATH
-#   2. bin/ directory
+#   2. Package manager (brew/apt/dnf) - interactive install
+#   3. bin/ directory
 #
-# Does NOT auto-download. If yt-dlp is not found, outputs error JSON with download info.
+# Environment variables:
+#   MK_AUTO_INSTALL=1      - Skip confirmation, auto-install via package manager
+#   MK_SKIP_PKG_MANAGER=1  - Skip package manager, use bin/ only
 #
 # Usage:
 #   source "$(dirname "$0")/_ensure_ytdlp.sh"
@@ -26,6 +29,57 @@ BIN_DIR="$SCRIPT_DIR/../bin"
 YT_DLP=""
 YTDLP_ERROR_JSON=""
 _YTDLP_EXIT_CODE=0
+
+# --- Package Manager Support ---
+
+_detect_pkg_manager() {
+    if command -v brew &>/dev/null; then
+        echo "brew"
+    elif command -v apt-get &>/dev/null; then
+        echo "apt"
+    elif command -v dnf &>/dev/null; then
+        echo "dnf"
+    else
+        echo ""
+    fi
+}
+
+_try_pkg_install() {
+    local pkg_name="$1"
+    local pkg_manager
+    pkg_manager=$(_detect_pkg_manager)
+
+    [ -z "$pkg_manager" ] && return 1
+
+    # Auto-install mode
+    if [ "${MK_AUTO_INSTALL:-}" = "1" ]; then
+        echo "[INFO] Auto-installing $pkg_name via $pkg_manager..." >&2
+        case "$pkg_manager" in
+            brew) brew install "$pkg_name" >&2 ;;
+            apt)  sudo apt-get install -y "$pkg_name" >&2 ;;
+            dnf)  sudo dnf install -y "$pkg_name" >&2 ;;
+        esac
+        return $?
+    fi
+
+    # Interactive confirmation
+    local prompt_suffix=""
+    [ "$pkg_manager" != "brew" ] && prompt_suffix=" (requires sudo)"
+
+    echo -n "Install $pkg_name via $pkg_manager?$prompt_suffix [y/N] " >&2
+    read -r response
+    if [[ "$response" =~ ^[Yy]$ ]]; then
+        case "$pkg_manager" in
+            brew) brew install "$pkg_name" >&2 ;;
+            apt)  sudo apt-get install -y "$pkg_name" >&2 ;;
+            dnf)  sudo dnf install -y "$pkg_name" >&2 ;;
+        esac
+        return $?
+    fi
+    return 1
+}
+
+# --- Platform Detection ---
 
 # Detect platform for binary name
 get_ytdlp_binary_name() {
@@ -55,7 +109,17 @@ find_ytdlp() {
         return 0
     fi
 
-    # 2. Check bin/ directory
+    # 2. Try package manager install (unless skipped)
+    if [ "${MK_SKIP_PKG_MANAGER:-}" != "1" ]; then
+        if _try_pkg_install "yt-dlp"; then
+            if command -v yt-dlp &> /dev/null; then
+                echo "$(command -v yt-dlp)"
+                return 0
+            fi
+        fi
+    fi
+
+    # 3. Check bin/ directory
     local binary_name binary_path
     binary_name=$(get_ytdlp_binary_name)
 

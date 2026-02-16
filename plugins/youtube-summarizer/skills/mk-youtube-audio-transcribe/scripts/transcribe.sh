@@ -20,9 +20,34 @@ set -e
 
 # Load dependencies
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$SCRIPT_DIR/_ensure_ffmpeg.sh"
-source "$SCRIPT_DIR/_ensure_whisper.sh"
+
+# Load jq first (needed for JSON error output)
+set +e
 source "$SCRIPT_DIR/_utility__ensure_jq.sh"
+set -e
+if [ -n "$JQ_ERROR_JSON" ]; then
+    echo "$JQ_ERROR_JSON"
+    exit 1
+fi
+
+# Load ffmpeg
+set +e
+source "$SCRIPT_DIR/_ensure_ffmpeg.sh"
+set -e
+if [ -n "$FFMPEG_ERROR_JSON" ]; then
+    echo "$FFMPEG_ERROR_JSON"
+    exit 1
+fi
+
+# Load whisper
+set +e
+source "$SCRIPT_DIR/_ensure_whisper.sh"
+set -e
+if [ -n "$WHISPER_ERROR_JSON" ]; then
+    echo "$WHISPER_ERROR_JSON"
+    exit 1
+fi
+
 source "$SCRIPT_DIR/_utility__naming.sh"
 
 AUDIO_FILE="$1"
