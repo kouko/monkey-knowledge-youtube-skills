@@ -2,9 +2,9 @@
 set -e
 
 # Load dependencies
-source "$(dirname "$0")/_ensure_ytdlp.sh"
-source "$(dirname "$0")/_ensure_jq.sh"
-source "$(dirname "$0")/_naming.sh"
+source "$(dirname "$0")/_utility__ensure_ytdlp.sh"
+source "$(dirname "$0")/_utility__ensure_jq.sh"
+source "$(dirname "$0")/_utility__naming.sh"
 
 CHANNEL="$1"
 LIMIT="${2:-10}"

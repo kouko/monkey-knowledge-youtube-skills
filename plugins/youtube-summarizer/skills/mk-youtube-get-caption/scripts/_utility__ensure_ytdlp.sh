@@ -77,7 +77,7 @@ else
 {
     "error_code": "YTDLP_NOT_FOUND",
     "message": "yt-dlp not found. Please install it first.",
-    "download_command": "$SCRIPT_DIR/_download_ytdlp.sh"
+    "download_command": "$SCRIPT_DIR/_utility__download_ytdlp.sh"
 }
 EOF
 )

@@ -26,7 +26,8 @@ mk-youtube-audio-transcribe/
     ├── _ensure_ffmpeg.sh    # Ensures ffmpeg is available
     ├── _ensure_whisper.sh   # Ensures whisper-cli is available
     ├── _ensure_model.sh     # Checks model exists (no auto-download)
-    ├── _ensure_jq.sh        # Ensures jq is available
+    ├── _utility__ensure_jq.sh        # Ensures jq is available
+    ├── _utility__naming.sh          # Unified naming and metadata functions
     ├── _build_whisper.sh    # Build script for updates
     ├── _download_ffmpeg.sh  # Download script for updates
     ├── download-model.sh    # Download whisper models

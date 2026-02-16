@@ -2,9 +2,9 @@
 set -e
 
 # Load dependency scripts
-source "$(dirname "$0")/_ensure_ytdlp.sh"
-source "$(dirname "$0")/_ensure_jq.sh"
-source "$(dirname "$0")/_naming.sh"
+source "$(dirname "$0")/_utility__ensure_ytdlp.sh"
+source "$(dirname "$0")/_utility__ensure_jq.sh"
+source "$(dirname "$0")/_utility__naming.sh"
 
 URL="$1"
 OUTPUT_DIR="${2:-$MONKEY_KNOWLEDGE_TMP/youtube/audio}"

@@ -374,9 +374,60 @@ sanitize_title() {
 | Content type + ext | 最多 20 字元 |
 | **總計** | ≤ 123 字元 ✅ |
 
-### 共用函式庫 `_naming.sh`
+### 共用腳本命名規範（`_utility__` 前綴）
 
-每個需要使用統一命名或 metadata 的 skill 需在 `scripts/` 目錄下包含 `_naming.sh`。
+#### 設計原則
+
+為確保各 skill 的獨立性，共用的工具腳本採用**獨立複製模式**：每個 skill 都有自己的複本，而非共享一個檔案。
+
+為識別這些需要保持同步的檔案，使用 `_utility__` 前綴（雙底線分隔）。
+
+#### 命名格式
+
+```
+_utility__{功能名稱}.sh
+```
+
+#### 共用腳本清單
+
+| 腳本名稱 | 用途 | 複本數 |
+|---------|------|--------|
+| `_utility__naming.sh` | 統一命名規則與 metadata 管理 | 7 |
+| `_utility__ensure_jq.sh` | jq 依賴偵測 | 7 |
+| `_utility__download_jq.sh` | jq 下載邏輯 | 7 |
+| `_utility__ensure_ytdlp.sh` | yt-dlp 依賴偵測 | 5 |
+| `_utility__download_ytdlp.sh` | yt-dlp 下載邏輯 | 5 |
+
+#### 維護規則
+
+1. **同步更新**：修改任一 `_utility__` 檔案時，必須同步更新所有複本
+2. **驗證一致性**：提交前執行驗證腳本確認所有複本相同
+3. **使用前綴識別**：依據 `_utility__` 前綴判斷檔案是否為共用腳本
+
+#### 驗證腳本
+
+使用 `scripts/verify-utility-sync.sh` 驗證所有複本一致：
+
+```bash
+./scripts/verify-utility-sync.sh
+
+# 輸出範例
+=== Verifying _utility__ scripts consistency ===
+
+✅ _utility__naming.sh: 7 copies, all identical
+✅ _utility__ensure_jq.sh: 7 copies, all identical
+✅ _utility__download_jq.sh: 7 copies, all identical
+✅ _utility__ensure_ytdlp.sh: 5 copies, all identical
+✅ _utility__download_ytdlp.sh: 5 copies, all identical
+
+All utility scripts are in sync.
+```
+
+---
+
+### 共用函式庫 `_utility__naming.sh`
+
+每個需要使用統一命名或 metadata 的 skill 需在 `scripts/` 目錄下包含 `_utility__naming.sh`。
 
 #### 提供的函式
 
@@ -392,7 +443,7 @@ sanitize_title() {
 #### 使用方式
 
 ```bash
-source "$(dirname "$0")/_naming.sh"
+source "$(dirname "$0")/_utility__naming.sh"
 
 # 生成檔名（含日期前綴）
 BASENAME=$(make_basename "$UPLOAD_DATE" "$VIDEO_ID" "$TITLE")

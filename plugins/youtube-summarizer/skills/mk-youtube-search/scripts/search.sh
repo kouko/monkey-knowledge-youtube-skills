@@ -2,9 +2,9 @@
 set -e
 
 # Load dependency scripts
-source "$(dirname "$0")/_ensure_ytdlp.sh"
-source "$(dirname "$0")/_ensure_jq.sh"
-source "$(dirname "$0")/_naming.sh"
+source "$(dirname "$0")/_utility__ensure_ytdlp.sh"
+source "$(dirname "$0")/_utility__ensure_jq.sh"
+source "$(dirname "$0")/_utility__naming.sh"
 
 QUERY="$1"
 COUNT="${2:-10}"

@@ -1,9 +1,9 @@
 #!/bin/bash
 set -e
 
-source "$(dirname "$0")/_ensure_ytdlp.sh"
-source "$(dirname "$0")/_ensure_jq.sh"
-source "$(dirname "$0")/_naming.sh"
+source "$(dirname "$0")/_utility__ensure_ytdlp.sh"
+source "$(dirname "$0")/_utility__ensure_jq.sh"
+source "$(dirname "$0")/_utility__naming.sh"
 
 URL="$1"
 LANG="${2:-}"  # Empty means auto-detect original language

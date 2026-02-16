@@ -22,8 +22,8 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/_ensure_ffmpeg.sh"
 source "$SCRIPT_DIR/_ensure_whisper.sh"
-source "$SCRIPT_DIR/_ensure_jq.sh"
-source "$SCRIPT_DIR/_naming.sh"
+source "$SCRIPT_DIR/_utility__ensure_jq.sh"
+source "$SCRIPT_DIR/_utility__naming.sh"
 
 AUDIO_FILE="$1"
 MODEL="${2:-auto}"

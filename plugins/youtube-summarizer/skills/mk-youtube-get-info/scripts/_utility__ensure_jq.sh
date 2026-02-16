@@ -86,7 +86,7 @@ else
 {
     "error_code": "JQ_NOT_FOUND",
     "message": "jq not found. Please install it first.",
-    "download_command": "$SCRIPT_DIR/_download_jq.sh"
+    "download_command": "$SCRIPT_DIR/_utility__download_jq.sh"
 }
 EOF
 )

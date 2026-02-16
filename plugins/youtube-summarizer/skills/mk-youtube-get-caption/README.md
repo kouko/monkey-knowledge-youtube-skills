@@ -19,9 +19,9 @@ mk-youtube-get-caption/
 ├── bin/                  # Auto-downloaded binaries (initially empty)
 │   └── .gitkeep
 └── scripts/
-    ├── _ensure_ytdlp.sh  # Ensures yt-dlp is available
-    ├── _ensure_jq.sh     # Ensures jq is available
-    ├── _naming.sh        # Unified naming and metadata functions
+    ├── _utility__ensure_ytdlp.sh  # Ensures yt-dlp is available
+    ├── _utility__ensure_jq.sh     # Ensures jq is available
+    ├── _utility__naming.sh        # Unified naming and metadata functions
     └── caption.sh        # Main caption script
 ```
 

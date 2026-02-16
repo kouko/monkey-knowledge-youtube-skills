@@ -15,8 +15,8 @@ mk-youtube-transcript-summarize/
 ├── bin/                  # Auto-downloaded binaries (initially empty)
 │   └── .gitkeep
 └── scripts/
-    ├── _ensure_jq.sh     # Ensures jq is available
-    ├── _naming.sh        # Unified naming and metadata functions
+    ├── _utility__ensure_jq.sh     # Ensures jq is available
+    ├── _utility__naming.sh        # Unified naming and metadata functions
     └── summary.sh        # File validation script
 ```
 
