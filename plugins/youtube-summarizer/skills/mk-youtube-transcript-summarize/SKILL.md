@@ -45,7 +45,8 @@ Generate a structured, high-quality summary of a YouTube video from its transcri
 3. Follow the **Processing Strategy** indicated by `strategy` field
 4. Generate a structured summary following the **Summary Generation Rules**
 5. **Save to `$TMPDIR/monkey_knowledge/youtube/summaries/<basename>.md`** using Write tool
-6. Include file path in response footer
+6. **Display the FULL summary content** to the user exactly as written to the file — do NOT abbreviate, condense, or re-summarize
+7. Include file path in response footer
 
 ### Processing Strategy
 
@@ -186,6 +187,14 @@ After generating the summary, save it using the Write tool:
 **Example:**
 - Input: `$TMPDIR/monkey_knowledge/youtube/captions/20091025__dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.en.txt`
 - Output: `$TMPDIR/monkey_knowledge/youtube/summaries/20091025__dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.en.md`
+
+**CRITICAL — Full Display Rule**: After saving the summary file, you MUST display the COMPLETE summary content to the user in your response. Output the full markdown content exactly as written to the file. Do NOT:
+- Re-summarize or condense the summary
+- Show only selected sections
+- Create an abbreviated version
+- Paraphrase or rewrite any part
+
+The user expects to see the full summary directly in the conversation without needing to open the file.
 
 End your response with the file path:
 ```

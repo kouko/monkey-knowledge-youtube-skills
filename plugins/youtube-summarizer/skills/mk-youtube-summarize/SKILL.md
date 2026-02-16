@@ -217,6 +217,8 @@ Use the Skill tool to invoke `/mk-youtube-transcript-summarize` with the `text_f
 
 Skipping this step or generating summaries without the skill will produce lower-quality output.
 
+**Display Rule**: The `/mk-youtube-transcript-summarize` skill will generate and save the full summary. You MUST display the COMPLETE summary content to the user as-is. Do NOT create a condensed or abbreviated version after the summary is generated.
+
 ## Processing Multiple Videos
 
 When summarizing multiple videos (either from a channel or manually specified):
