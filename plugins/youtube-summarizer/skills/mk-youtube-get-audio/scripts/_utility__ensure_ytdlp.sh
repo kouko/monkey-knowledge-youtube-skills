@@ -1,17 +1,12 @@
 #!/bin/bash
-# _ensure_ytdlp.sh - Ensure yt-dlp is available
+# _utility__ensure_ytdlp.sh - Ensure yt-dlp is available
 #
 # Checks for yt-dlp in:
 #   1. System PATH
-#   2. Package manager (brew/apt/dnf) - interactive install
-#   3. bin/ directory
-#
-# Environment variables:
-#   MK_AUTO_INSTALL=1      - Skip confirmation, auto-install via package manager
-#   MK_SKIP_PKG_MANAGER=1  - Skip package manager, use bin/ only
+#   2. bin/ directory (universal or platform-specific binary)
 #
 # Usage:
-#   source "$(dirname "$0")/_ensure_ytdlp.sh"
+#   source "$(dirname "$0")/_utility__ensure_ytdlp.sh"
 #   if [ -n "$YTDLP_ERROR_JSON" ]; then
 #       echo "$YTDLP_ERROR_JSON"
 #       exit 1
@@ -29,55 +24,6 @@ BIN_DIR="$SCRIPT_DIR/../bin"
 YT_DLP=""
 YTDLP_ERROR_JSON=""
 _YTDLP_EXIT_CODE=0
-
-# --- Package Manager Support ---
-
-_detect_pkg_manager() {
-    if command -v brew &>/dev/null; then
-        echo "brew"
-    elif command -v apt-get &>/dev/null; then
-        echo "apt"
-    elif command -v dnf &>/dev/null; then
-        echo "dnf"
-    else
-        echo ""
-    fi
-}
-
-_try_pkg_install() {
-    local pkg_name="$1"
-    local pkg_manager
-    pkg_manager=$(_detect_pkg_manager)
-
-    [ -z "$pkg_manager" ] && return 1
-
-    # Auto-install mode
-    if [ "${MK_AUTO_INSTALL:-}" = "1" ]; then
-        echo "[INFO] Auto-installing $pkg_name via $pkg_manager..." >&2
-        case "$pkg_manager" in
-            brew) brew install "$pkg_name" >&2 ;;
-            apt)  sudo apt-get install -y "$pkg_name" >&2 ;;
-            dnf)  sudo dnf install -y "$pkg_name" >&2 ;;
-        esac
-        return $?
-    fi
-
-    # Interactive confirmation
-    local prompt_suffix=""
-    [ "$pkg_manager" != "brew" ] && prompt_suffix=" (requires sudo)"
-
-    echo -n "Install $pkg_name via $pkg_manager?$prompt_suffix [y/N] " >&2
-    read -r response
-    if [[ "$response" =~ ^[Yy]$ ]]; then
-        case "$pkg_manager" in
-            brew) brew install "$pkg_name" >&2 ;;
-            apt)  sudo apt-get install -y "$pkg_name" >&2 ;;
-            dnf)  sudo dnf install -y "$pkg_name" >&2 ;;
-        esac
-        return $?
-    fi
-    return 1
-}
 
 # --- Platform Detection ---
 
@@ -134,17 +80,7 @@ find_ytdlp() {
         return 0
     fi
 
-    # 2. Try package manager install (unless skipped)
-    if [ "${MK_SKIP_PKG_MANAGER:-}" != "1" ]; then
-        if _try_pkg_install "yt-dlp"; then
-            if command -v yt-dlp &> /dev/null; then
-                echo "$(command -v yt-dlp)"
-                return 0
-            fi
-        fi
-    fi
-
-    # 3. Check bin/ directory - universal binary (official release, preferred)
+    # 2. Check bin/ directory - universal binary (official release, preferred)
     local binary_name
     binary_name=$(get_ytdlp_binary_name)
     if [ -n "$binary_name" ] && [ -x "$BIN_DIR/$binary_name" ]; then
@@ -152,7 +88,7 @@ find_ytdlp() {
         return 0
     fi
 
-    # 4. Check bin/ directory - platform-specific binary (local build fallback)
+    # 3. Check bin/ directory - platform-specific binary (local build fallback)
     local platform_binary_name
     platform_binary_name=$(get_ytdlp_platform_binary_name)
     if [ -n "$platform_binary_name" ] && [ -x "$BIN_DIR/$platform_binary_name" ]; then
@@ -172,8 +108,7 @@ else
     YTDLP_ERROR_JSON=$(cat <<EOF
 {
     "error_code": "YTDLP_NOT_FOUND",
-    "message": "yt-dlp not found. Please install it first.",
-    "install_command": "brew install yt-dlp",
+    "message": "yt-dlp not found. Please download it first.",
     "download_command": "$SCRIPT_DIR/_utility__download_ytdlp.sh",
     "build_command": "$SCRIPT_DIR/_utility__build_ytdlp.sh"
 }

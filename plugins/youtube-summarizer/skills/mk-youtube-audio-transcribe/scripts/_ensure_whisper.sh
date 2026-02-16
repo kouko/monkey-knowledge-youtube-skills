@@ -3,15 +3,7 @@
 #
 # Checks for whisper-cli in:
 #   1. System PATH
-#   2. Package manager (Homebrew only: whisper-cpp)
-#   3. bin/ directory
-#
-# Note: whisper-cpp is only available in Homebrew (macOS).
-# For Linux, use ./scripts/_build_whisper.sh to build from source.
-#
-# Environment variables:
-#   MK_AUTO_INSTALL=1      - Skip confirmation, auto-install via package manager
-#   MK_SKIP_PKG_MANAGER=1  - Skip package manager, use bin/ only
+#   2. bin/ directory (platform-specific binary)
 #
 # Usage:
 #   source "$(dirname "$0")/_ensure_whisper.sh"
@@ -32,31 +24,6 @@ BIN_DIR="$SCRIPT_DIR/../bin"
 WHISPER=""
 WHISPER_ERROR_JSON=""
 _WHISPER_EXIT_CODE=0
-
-# --- Package Manager Support (Homebrew only for whisper-cpp) ---
-
-_try_pkg_install_whisper() {
-    # whisper-cpp is only available in Homebrew
-    if ! command -v brew &>/dev/null; then
-        return 1
-    fi
-
-    # Auto-install mode
-    if [ "${MK_AUTO_INSTALL:-}" = "1" ]; then
-        echo "[INFO] Auto-installing whisper-cpp via brew..." >&2
-        brew install whisper-cpp >&2
-        return $?
-    fi
-
-    # Interactive confirmation
-    echo -n "Install whisper-cpp via brew? [y/N] " >&2
-    read -r response
-    if [[ "$response" =~ ^[Yy]$ ]]; then
-        brew install whisper-cpp >&2
-        return $?
-    fi
-    return 1
-}
 
 # --- Platform Detection ---
 
@@ -84,17 +51,7 @@ find_whisper() {
         return 0
     fi
 
-    # 2. Try Homebrew install (unless skipped)
-    if [ "${MK_SKIP_PKG_MANAGER:-}" != "1" ]; then
-        if _try_pkg_install_whisper; then
-            if command -v whisper-cli &> /dev/null; then
-                echo "whisper-cli"
-                return 0
-            fi
-        fi
-    fi
-
-    # 3. Check pre-built binary in bin/ (with platform suffix)
+    # 2. Check pre-built binary in bin/ (with platform suffix)
     local binary_name="$(get_whisper_binary_name)"
     if [ -n "$binary_name" ]; then
         local binary_path="$BIN_DIR/$binary_name"
@@ -104,7 +61,7 @@ find_whisper() {
         fi
     fi
 
-    # 4. Not available
+    # 3. Not available
     return 1
 }
 
@@ -116,8 +73,7 @@ else
     WHISPER_ERROR_JSON=$(cat <<EOF
 {
     "error_code": "WHISPER_NOT_FOUND",
-    "message": "whisper-cli not found. Please install it first.",
-    "install_command": "brew install whisper-cpp",
+    "message": "whisper-cli not found. Please build or download it first.",
     "build_command": "$SCRIPT_DIR/_build_whisper.sh"
 }
 EOF
