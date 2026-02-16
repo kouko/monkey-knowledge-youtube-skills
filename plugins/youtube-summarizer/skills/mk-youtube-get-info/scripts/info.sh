@@ -16,10 +16,11 @@ fi
 # Get raw metadata from yt-dlp
 RAW_META=$("$YT_DLP" -j --no-download "$URL" 2>/dev/null)
 
-# Extract video ID and title for basename
+# Extract video ID, title, and upload_date for basename
 VIDEO_ID=$(echo "$RAW_META" | "$JQ" -r '.id')
 TITLE=$(echo "$RAW_META" | "$JQ" -r '.title')
-BASENAME=$(make_basename "$VIDEO_ID" "$TITLE")
+UPLOAD_DATE=$(echo "$RAW_META" | "$JQ" -r '.upload_date')
+BASENAME=$(make_basename "$UPLOAD_DATE" "$VIDEO_ID" "$TITLE")
 
 # Build metadata JSON for storage (complete data)
 META_JSON=$(echo "$RAW_META" | "$JQ" '{

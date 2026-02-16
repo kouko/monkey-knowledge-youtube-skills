@@ -23,7 +23,7 @@ Claude Code plugin for YouTube video tools - search, info, transcript, audio dow
 - **Independent skills**: Each skill is self-contained with its own dependencies
 - **LLM-friendly output**: JSON output for easy parsing
 - **Centralized metadata storage**: Video metadata shared across all skills via `/tmp/youtube-video-meta/`
-- **Unified filename convention**: All files use `{video_id}__{sanitized_title}.{ext}` format
+- **Unified filename convention**: All files use `{YYYYMMDD}__{video_id}__{sanitized_title}.{ext}` format with date prefix for natural sorting
 
 ## Project Structure
 
@@ -106,15 +106,15 @@ All video metadata is stored in `/tmp/youtube-video-meta/` for cross-skill acces
 ```
 /tmp/
 ├── youtube-video-meta/           # Centralized metadata store
-│   └── {video_id}__{title}.meta.json
+│   └── {YYYYMMDD}__{video_id}__{title}.meta.json
 ├── youtube-captions/             # Subtitle files
-│   └── {video_id}__{title}.{lang}.{srt|txt}
+│   └── {YYYYMMDD}__{video_id}__{title}.{lang}.{srt|txt}
 ├── youtube-audio/                # Audio files
-│   └── {video_id}__{title}.{ext}
+│   └── {YYYYMMDD}__{video_id}__{title}.{ext}
 ├── youtube-audio-transcribe/     # Transcription results
-│   └── {video_id}__{title}.{json|txt}
+│   └── {YYYYMMDD}__{video_id}__{title}.{json|txt}
 └── youtube-summaries/            # Summary files
-    └── {video_id}__{title}.{lang}.md
+    └── {YYYYMMDD}__{video_id}__{title}.{lang}.md
 ```
 
 ### Metadata Merge Strategy
@@ -151,25 +151,27 @@ All video metadata is stored in `/tmp/youtube-video-meta/` for cross-skill acces
 
 ## Unified Filename Convention
 
-All generated files use a consistent naming format for easy identification and cross-skill compatibility.
+All generated files use a consistent naming format with date prefix for natural sorting and easy identification.
 
 ### Format
 
 ```
-{video_id}__{sanitized_title}.{content_type}.{extension}
+{YYYYMMDD}__{video_id}__{sanitized_title}.{content_type}.{extension}
 ```
+
+The date prefix `{YYYYMMDD}` is the video's upload date, enabling chronological file sorting.
 
 ### Examples
 
 | File Type | Example |
 |-----------|---------|
-| Metadata | `dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.meta.json` |
-| Caption (SRT) | `dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.en.srt` |
-| Caption (TXT) | `dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.en.txt` |
-| Audio | `dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.m4a` |
-| Transcript (JSON) | `dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.json` |
-| Transcript (TXT) | `dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.txt` |
-| Summary | `dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.en.md` |
+| Metadata | `20091025__dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.meta.json` |
+| Caption (SRT) | `20091025__dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.en.srt` |
+| Caption (TXT) | `20091025__dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.en.txt` |
+| Audio | `20091025__dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.m4a` |
+| Transcript (JSON) | `20091025__dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.json` |
+| Transcript (TXT) | `20091025__dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.txt` |
+| Summary | `20091025__dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.en.md` |
 
 ### Title Sanitization Rules
 
@@ -183,11 +185,12 @@ All generated files use a consistent naming format for easy identification and c
 
 | Component | Length |
 |-----------|--------|
+| Date prefix | 8 chars (YYYYMMDD) |
+| Separators | 4 chars (`__` x 2) |
 | Video ID | 11 chars (fixed) |
-| Separator | 2 chars (`__`) |
 | Title | max 80 chars |
 | Content type + ext | max 20 chars |
-| **Total** | ≤ 113 chars ✅ |
+| **Total** | ≤ 123 chars ✅ |
 
 ## Output Formats
 
@@ -227,8 +230,8 @@ All skills include video metadata in their JSON output when available.
 ```json
 {
   "status": "success",
-  "file_path": "/tmp/youtube-captions/VIDEO_ID__Video_Title.en.srt",
-  "text_file_path": "/tmp/youtube-captions/VIDEO_ID__Video_Title.en.txt",
+  "file_path": "/tmp/youtube-captions/20240101__VIDEO_ID__Video_Title.en.srt",
+  "text_file_path": "/tmp/youtube-captions/20240101__VIDEO_ID__Video_Title.en.txt",
   "language": "en",
   "subtitle_type": "manual",
   "video_id": "dQw4w9WgXcQ",
@@ -243,7 +246,7 @@ All skills include video metadata in their JSON output when available.
 ```json
 {
   "status": "success",
-  "file_path": "/tmp/youtube-audio/VIDEO_ID__Video_Title.m4a",
+  "file_path": "/tmp/youtube-audio/20240101__VIDEO_ID__Video_Title.m4a",
   "file_size": "5.2M",
   "video_id": "dQw4w9WgXcQ",
   "title": "Video Title",
@@ -258,8 +261,8 @@ All skills include video metadata in their JSON output when available.
 ```json
 {
   "status": "success",
-  "file_path": "/tmp/youtube-audio-transcribe/VIDEO_ID__Video_Title.json",
-  "text_file_path": "/tmp/youtube-audio-transcribe/VIDEO_ID__Video_Title.txt",
+  "file_path": "/tmp/youtube-audio-transcribe/20240101__VIDEO_ID__Video_Title.json",
+  "text_file_path": "/tmp/youtube-audio-transcribe/20240101__VIDEO_ID__Video_Title.txt",
   "language": "en",
   "duration": "3:32",
   "model": "medium",
@@ -275,8 +278,8 @@ All skills include video metadata in their JSON output when available.
 ```json
 {
   "status": "success",
-  "source_transcript": "/tmp/youtube-captions/VIDEO_ID__Video_Title.en.txt",
-  "output_summary": "/tmp/youtube-summaries/VIDEO_ID__Video_Title.en.md",
+  "source_transcript": "/tmp/youtube-captions/20240101__VIDEO_ID__Video_Title.en.txt",
+  "output_summary": "/tmp/youtube-summaries/20240101__VIDEO_ID__Video_Title.en.md",
   "char_count": 30000,
   "line_count": 450,
   "strategy": "standard",
@@ -323,7 +326,7 @@ All skills include video metadata in their JSON output when available.
 
 # Manual workflow: caption → summarize
 /mk-youtube-get-caption https://www.youtube.com/watch?v=xxx
-/mk-youtube-transcript-summarize /tmp/youtube-captions/VIDEO_ID__Video_Title.en.txt
+/mk-youtube-transcript-summarize /tmp/youtube-captions/20240101__VIDEO_ID__Video_Title.en.txt
 ```
 
 ## Workflow: Video Summarization

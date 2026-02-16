@@ -259,20 +259,20 @@ claude --plugin-dir /path/to/monkey-knowledge-skills/plugins/youtube-summarizer
 ```
 /tmp/
 ├── youtube-video-meta/           # 集中式 metadata 儲存
-│   └── {video_id}__{title}.meta.json
+│   └── {YYYYMMDD}__{video_id}__{title}.meta.json
 ├── youtube-captions/             # 字幕檔案
-│   └── {video_id}__{title}.{lang}.{srt|txt}
+│   └── {YYYYMMDD}__{video_id}__{title}.{lang}.{srt|txt}
 ├── youtube-audio/                # 音訊檔案
-│   └── {video_id}__{title}.{ext}
+│   └── {YYYYMMDD}__{video_id}__{title}.{ext}
 ├── youtube-audio-transcribe/     # 轉錄結果
-│   └── {video_id}__{title}.{json|txt}
+│   └── {YYYYMMDD}__{video_id}__{title}.{json|txt}
 └── youtube-summaries/            # 摘要檔案
-    └── {video_id}__{title}.{lang}.md
+    └── {YYYYMMDD}__{video_id}__{title}.{lang}.md
 ```
 
 #### Metadata JSON 格式
 
-`/tmp/youtube-video-meta/{video_id}__{title}.meta.json`：
+`/tmp/youtube-video-meta/{YYYYMMDD}__{video_id}__{title}.meta.json`：
 
 ```json
 {
@@ -314,20 +314,22 @@ claude --plugin-dir /path/to/monkey-knowledge-skills/plugins/youtube-summarizer
 #### 命名格式
 
 ```
-{video_id}__{sanitized_title}.{content_type}.{extension}
+{YYYYMMDD}__{video_id}__{sanitized_title}.{content_type}.{extension}
 ```
+
+日期前綴 `{YYYYMMDD}` 為影片上傳日期，使檔案自然排序。
 
 #### 命名範例
 
 | 檔案類型 | 命名範例 |
 |---------|---------|
-| Metadata | `dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.meta.json` |
-| 字幕 (SRT) | `dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.en.srt` |
-| 字幕 (TXT) | `dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.en.txt` |
-| 音訊 | `dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.m4a` |
-| 轉錄 (JSON) | `dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.json` |
-| 轉錄 (TXT) | `dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.txt` |
-| 摘要 | `dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.en.md` |
+| Metadata | `20091025__dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.meta.json` |
+| 字幕 (SRT) | `20091025__dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.en.srt` |
+| 字幕 (TXT) | `20091025__dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.en.txt` |
+| 音訊 | `20091025__dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.m4a` |
+| 轉錄 (JSON) | `20091025__dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.json` |
+| 轉錄 (TXT) | `20091025__dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.txt` |
+| 摘要 | `20091025__dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.en.md` |
 
 #### Title 清理規則
 
@@ -349,11 +351,12 @@ sanitize_title() {
 
 | 組成 | 長度 |
 |------|------|
+| 日期前綴 | 8 字元（YYYYMMDD） |
+| 分隔符 | 4 字元（`__` x 2） |
 | Video ID | 11 字元（固定） |
-| 分隔符 | 2 字元（`__`） |
 | Title | 最多 80 字元 |
 | Content type + ext | 最多 20 字元 |
-| **總計** | ≤ 113 字元 ✅ |
+| **總計** | ≤ 123 字元 ✅ |
 
 ### 共用函式庫 `_naming.sh`
 
@@ -364,7 +367,8 @@ sanitize_title() {
 | 函式 | 用途 |
 |------|------|
 | `sanitize_title "$TITLE" [max_length]` | 清理標題用於檔案名稱 |
-| `make_basename "$VIDEO_ID" "$TITLE"` | 生成統一檔案名稱基底 |
+| `make_basename "$UPLOAD_DATE" "$VIDEO_ID" "$TITLE"` | 生成統一檔案名稱基底（含日期前綴） |
+| `extract_video_id_from_basename "$BASENAME"` | 從 basename 提取 video_id（跳過日期前綴） |
 | `write_or_merge_meta "$FILE" "$JSON" "$IS_PARTIAL"` | 寫入或合併 metadata |
 | `find_meta_by_id "$VIDEO_ID"` | 依 video_id 尋找 metadata 檔案 |
 | `read_meta "$VIDEO_ID"` | 讀取 metadata JSON |
@@ -374,9 +378,13 @@ sanitize_title() {
 ```bash
 source "$(dirname "$0")/_naming.sh"
 
-# 生成檔名
-BASENAME=$(make_basename "$VIDEO_ID" "$TITLE")
-# 輸出: dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up
+# 生成檔名（含日期前綴）
+BASENAME=$(make_basename "$UPLOAD_DATE" "$VIDEO_ID" "$TITLE")
+# 輸出: 20091025__dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up
+
+# 從檔名提取 video_id
+VIDEO_ID=$(extract_video_id_from_basename "$BASENAME")
+# 輸出: dQw4w9WgXcQ
 
 # 讀取 metadata
 EXISTING_META=$(read_meta "$VIDEO_ID")

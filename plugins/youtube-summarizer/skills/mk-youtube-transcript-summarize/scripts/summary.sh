@@ -40,11 +40,11 @@ BASENAME=$(basename "$ABS_PATH")
 BASENAME_NO_EXT="${BASENAME%.*}"
 OUTPUT_SUMMARY="/tmp/youtube-summaries/${BASENAME_NO_EXT}.md"
 
-# Extract video ID from filename (format: {id}__{title}.{lang}.{ext})
-# Video ID is the part before the first "__"
+# Extract video ID from filename (format: {YYYYMMDD}__{id}__{title}.{lang}.{ext})
+# Video ID is extracted from position 10-20 (after the date prefix)
 VIDEO_ID=""
 if [[ "$BASENAME_NO_EXT" == *"__"* ]]; then
-    VIDEO_ID="${BASENAME_NO_EXT%%__*}"
+    VIDEO_ID=$(extract_video_id_from_basename "$BASENAME_NO_EXT")
 fi
 
 # Read metadata from centralized store (if available)

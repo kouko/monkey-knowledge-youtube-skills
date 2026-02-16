@@ -130,7 +130,8 @@ mkdir -p "$META_DIR"
 echo "$FINAL_OUTPUT" | "$JQ" -c '.[]' | while read -r line; do
     VIDEO_ID=$(echo "$line" | "$JQ" -r '.id')
     TITLE=$(echo "$line" | "$JQ" -r '.title')
-    BASENAME=$(make_basename "$VIDEO_ID" "$TITLE")
+    UPLOAD_DATE=$(echo "$line" | "$JQ" -r '.upload_date')
+    BASENAME=$(make_basename "$UPLOAD_DATE" "$VIDEO_ID" "$TITLE")
 
     META_JSON=$(echo "$line" | "$JQ" '{
         video_id: .id,

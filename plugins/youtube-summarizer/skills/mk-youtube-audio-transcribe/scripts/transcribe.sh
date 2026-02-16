@@ -98,11 +98,11 @@ BASENAME=$(basename "$AUDIO_FILE" | sed 's/\.[^.]*$//')
 JSON_OUTPUT="$OUTPUT_DIR/${BASENAME}.json"
 TEXT_OUTPUT="$OUTPUT_DIR/${BASENAME}.txt"
 
-# Extract video ID from filename (format: {id}__{title}.{ext})
-# Video ID is the part before the first "__"
-VIDEO_ID=$(echo "$BASENAME" | cut -d'_' -f1)
+# Extract video ID from filename (format: {YYYYMMDD}__{id}__{title}.{ext})
+# Video ID is extracted from position 10-20 (after the date prefix)
+VIDEO_ID=""
 if [[ "$BASENAME" == *"__"* ]]; then
-    VIDEO_ID="${BASENAME%%__*}"
+    VIDEO_ID=$(extract_video_id_from_basename "$BASENAME")
 fi
 
 # Read metadata from centralized store (if available)

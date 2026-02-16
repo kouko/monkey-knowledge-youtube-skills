@@ -18,9 +18,10 @@ fi
 
 mkdir -p "$OUTPUT_DIR"
 
-# Get video ID and title for unified naming
+# Get video ID, title, and upload_date for unified naming
 VIDEO_ID=$("$YT_DLP" --print id "$URL" 2>/dev/null)
 TITLE=$("$YT_DLP" --print title "$URL" 2>/dev/null)
+UPLOAD_DATE=$("$YT_DLP" --print upload_date "$URL" 2>/dev/null)
 
 if [ -z "$VIDEO_ID" ]; then
     "$JQ" -n --arg status "error" \
@@ -29,7 +30,7 @@ if [ -z "$VIDEO_ID" ]; then
     exit 1
 fi
 
-BASENAME=$(make_basename "$VIDEO_ID" "$TITLE")
+BASENAME=$(make_basename "$UPLOAD_DATE" "$VIDEO_ID" "$TITLE")
 
 # Read existing metadata or create minimal entry
 EXISTING_META=$(read_meta "$VIDEO_ID")
@@ -44,6 +45,7 @@ if [ -z "$EXISTING_META" ]; then
         --arg title "$TITLE" \
         --arg channel "$CHANNEL" \
         --arg url "$WEBPAGE_URL" \
+        --arg upload_date "$UPLOAD_DATE" \
         --arg duration_string "$DURATION" \
         --arg source "caption" \
         '{
@@ -51,6 +53,7 @@ if [ -z "$EXISTING_META" ]; then
             title: $title,
             channel: $channel,
             url: $url,
+            upload_date: $upload_date,
             duration_string: $duration_string,
             source: $source,
             partial: true,
@@ -61,8 +64,8 @@ if [ -z "$EXISTING_META" ]; then
     EXISTING_META="$META_JSON"
 fi
 
-# Clean up old files for this video
-rm -f "$OUTPUT_DIR/${VIDEO_ID}"__*.srt "$OUTPUT_DIR/${VIDEO_ID}"__*.txt 2>/dev/null || true
+# Clean up old files for this video (supports new date-prefixed format)
+rm -f "$OUTPUT_DIR/"*"__${VIDEO_ID}__"*.srt "$OUTPUT_DIR/"*"__${VIDEO_ID}__"*.txt 2>/dev/null || true
 
 # If no language specified, get video's original language
 if [ -z "$LANG" ] || [ "$LANG" = "auto" ]; then
