@@ -6,6 +6,8 @@ Search YouTube videos by keyword and return structured results.
 
 This skill uses `yt-dlp` to search YouTube and returns video metadata in JSON format. It supports automatic dependency management - if `yt-dlp` or `jq` is not installed on the system, it will be downloaded automatically.
 
+Search results are saved to the centralized metadata store (`/tmp/youtube-video-meta/`) for use by other skills in the pipeline.
+
 ## File Structure
 
 ```
@@ -17,6 +19,7 @@ mk-youtube-search/
 └── scripts/
     ├── _ensure_ytdlp.sh  # Ensures yt-dlp is available
     ├── _ensure_jq.sh     # Ensures jq is available
+    ├── _naming.sh        # Unified naming and metadata functions
     └── search.sh         # Main search script
 ```
 
@@ -58,7 +61,7 @@ Priority:
 ### Usage
 
 ```bash
-./scripts/search.sh "<query>" [count]
+./scripts/search.sh "<query>" [count] [mode]
 ```
 
 ### Parameters
@@ -66,25 +69,54 @@ Priority:
 | Parameter | Required | Default | Description |
 |-----------|----------|---------|-------------|
 | query | Yes | - | Search keywords |
-| count | No | 5 | Number of results |
+| count | No | 10 | Number of results |
+| mode | No | fast | `fast` or `full` (see Mode Selection) |
+
+### Mode Selection
+
+| Mode | Speed | Metadata | Use When |
+|------|-------|----------|----------|
+| `fast` | ~1-2s | Basic (no upload_date) | General searches, topic exploration |
+| `full` | ~5-8s | Complete (includes upload_date, description) | Time-sensitive searches, recent content |
 
 ### Output Format
 
 ```json
 [
   {
+    "id": "dQw4w9WgXcQ",
     "title": "Video Title",
     "url": "https://www.youtube.com/watch?v=...",
     "duration_string": "10:23",
-    "view_count": 1234567
+    "view_count": 1234567,
+    "upload_date": "20240115",
+    "channel": "Channel Name",
+    "channel_url": "https://www.youtube.com/channel/UC...",
+    "live_status": "not_live",
+    "description": "First 200 chars..."
   }
 ]
 ```
 
+### Output Fields
+
+| Field | Type | Description | Fast Mode |
+|-------|------|-------------|-----------|
+| id | string | YouTube video ID | ✅ |
+| title | string | Video title | ✅ |
+| url | string | Full video URL | ✅ |
+| duration_string | string | Duration in HH:MM:SS or MM:SS format | ✅ |
+| view_count | number | Total view count | ✅ |
+| upload_date | string | Upload date in YYYYMMDD format | ❌ (null) |
+| channel | string | Channel name | ✅ |
+| channel_url | string | Channel URL | ✅ |
+| live_status | string | not_live, is_live, was_live, is_upcoming | ❌ (null) |
+| description | string | First 200 characters of description | ❌ (empty) |
+
 ## Examples
 
 ```bash
-# Search for AI tutorials (default 5 results)
+# Search for AI tutorials (fast mode, default)
 ./scripts/search.sh "AI tutorial"
 
 # Search with specific count
@@ -92,16 +124,22 @@ Priority:
 
 # Search with quoted phrase
 ./scripts/search.sh "\"deep learning\" beginner" 3
+
+# Search with full metadata (slower but includes upload_date)
+./scripts/search.sh "Claude AI news" 5 full
+
+# Search for recent content (full mode recommended)
+./scripts/search.sh "latest iPhone review" 10 full
 ```
 
 ## How It Works
 
 ```
-┌─────────────────┐
-│  search.sh      │
-└────────┬────────┘
-         │
-         ▼
+┌─────────────────────────────────┐
+│  search.sh <query> [count] [mode]│
+└────────────────┬────────────────┘
+                 │
+                 ▼
 ┌─────────────────┐     ┌─────────────────┐
 │ _ensure_ytdlp   │────▶│ $YT_DLP         │
 └─────────────────┘     └────────┬────────┘
@@ -109,18 +147,50 @@ Priority:
 ┌─────────────────┐              │
 │ _ensure_jq      │────▶ $JQ    │
 └─────────────────┘              │
+                                 │
+┌─────────────────┐              │
+│ _naming.sh      │────▶ Metadata functions
+└─────────────────┘              │
                                  ▼
+                   ┌─────────────────────────────┐
+                   │    Mode Selection           │
+                   ├─────────────────────────────┤
+                   │ fast: --flat-playlist       │
+                   │       (quick, limited meta) │
+                   │ full: no --flat-playlist    │
+                   │       (slow, complete meta) │
+                   └──────────────┬──────────────┘
+                                  │
+                                  ▼
                         ┌─────────────────┐
                         │ yt-dlp search   │
-                        │ ytsearch5:query │
+                        │ ytsearchN:query │
                         └────────┬────────┘
                                  │
                                  ▼
                         ┌─────────────────┐
                         │ jq transform    │
                         │ JSON output     │
-                        └─────────────────┘
+                        └────────┬────────┘
+                                 │
+                                 ▼
+                   ┌─────────────────────────────┐
+                   │ Write metadata (full only)  │
+                   │ /tmp/youtube-video-meta/    │
+                   └─────────────────────────────┘
 ```
+
+## Centralized Metadata Storage
+
+Search results are saved to `/tmp/youtube-video-meta/` with `partial: true` flag.
+
+**Note:** Metadata is only written in `full` mode (since `fast` mode lacks `upload_date` required for filename).
+
+| Scenario | Behavior |
+|----------|----------|
+| search (full) → get-info | search writes partial, get-info updates to complete |
+| get-info → search | get-info already complete, search won't overwrite |
+| search (fast) | No metadata written (missing upload_date) |
 
 ## Error Handling
 

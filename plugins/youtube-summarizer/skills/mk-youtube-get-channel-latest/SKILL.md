@@ -77,6 +77,7 @@ Get the latest content from a YouTube channel with type filtering.
     "view_count": 1500000000,
     "upload_date": "20091025",
     "channel": "Rick Astley",
+    "channel_url": "https://www.youtube.com/channel/UC...",
     "live_status": "not_live",
     "description": "First 200 chars of description..."
   }
@@ -102,6 +103,7 @@ Get the latest content from a YouTube channel with type filtering.
 | view_count | number | View count (may be null for upcoming) |
 | upload_date | string | Upload date in YYYYMMDD format |
 | channel | string | Channel name |
+| channel_url | string | Channel URL |
 | live_status | string | Status: not_live, is_live, was_live, is_upcoming |
 | description | string | First 200 characters of description |
 

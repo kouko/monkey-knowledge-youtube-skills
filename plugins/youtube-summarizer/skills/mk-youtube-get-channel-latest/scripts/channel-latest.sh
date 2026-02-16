@@ -42,6 +42,12 @@ else
     CHANNEL_BASE="${CHANNEL_BASE%/podcasts}"
 fi
 
+# Fetch channel info (name and URL) from the first video
+# This is needed because --flat-playlist on channel tabs doesn't include channel info
+CHANNEL_INFO=$("$YT_DLP" --print channel --print channel_url --playlist-items 1 "$CHANNEL_BASE/videos" 2>/dev/null || echo "")
+CHANNEL_NAME=$(echo "$CHANNEL_INFO" | head -1)
+CHANNEL_URL=$(echo "$CHANNEL_INFO" | tail -1)
+
 # Function to fetch from a single tab
 fetch_tab() {
     local tab_url="$1"
@@ -108,7 +114,9 @@ if [ -z "$RESULT" ]; then
 fi
 
 # Parse, deduplicate, sort, and limit results
-FINAL_OUTPUT=$(echo "$RESULT" | "$JQ" -s --argjson limit "$LIMIT" '
+# Inject channel info since --flat-playlist on channel tabs doesn't include it
+FINAL_OUTPUT=$(echo "$RESULT" | "$JQ" -s --argjson limit "$LIMIT" \
+    --arg channel_name "$CHANNEL_NAME" --arg channel_url "$CHANNEL_URL" '
     map({
         id,
         title,
@@ -116,7 +124,8 @@ FINAL_OUTPUT=$(echo "$RESULT" | "$JQ" -s --argjson limit "$LIMIT" '
         duration_string,
         view_count,
         upload_date,
-        channel,
+        channel: $channel_name,
+        channel_url: $channel_url,
         live_status,
         description: (.description // "" | .[0:200])
     })
@@ -137,6 +146,7 @@ echo "$FINAL_OUTPUT" | "$JQ" -c '.[]' | while read -r line; do
         video_id: .id,
         title,
         channel,
+        channel_url,
         url,
         upload_date,
         duration_string,
