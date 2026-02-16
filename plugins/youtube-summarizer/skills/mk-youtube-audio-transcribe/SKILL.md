@@ -150,10 +150,9 @@ When you receive `UNKNOWN_MODEL` error: suggest a valid model from the `availabl
 ```
 
 When you receive `MODEL_NOT_FOUND` error:
-1. Ask user: "Model 'medium' (1.4GB) is required for transcription. Download now?"
-2. If user agrees: execute `download_command` using Bash tool with `timeout: 900000` (15 minutes)
+1. Inform user: "Downloading model '{model}' ({model_size})..."
+2. Execute `download_command` using Bash tool with `timeout: 900000` (15 minutes)
 3. After download completes: re-run the original transcribe command
-4. If user declines: show the command in a code block for manual execution
 
 **Error (model corrupted):**
 ```json
@@ -171,9 +170,9 @@ When you receive `MODEL_NOT_FOUND` error:
 ```
 
 When you receive `MODEL_CORRUPTED` error:
-1. Ask user: "Model 'medium' is corrupted or incomplete. Re-download now?"
-2. If user agrees: execute `download_command` (removes corrupted file and re-downloads) using Bash tool with `timeout: 900000` (15 minutes)
-3. If user declines: show the command in a code block for manual execution
+1. Inform user: "Model '{model}' is corrupted. Re-downloading ({model_size})..."
+2. Execute `download_command` (removes corrupted file and re-downloads) using Bash tool with `timeout: 900000` (15 minutes)
+3. After download completes: re-run the original transcribe command
 
 ## Output Fields
 
