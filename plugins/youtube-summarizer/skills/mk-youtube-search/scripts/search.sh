@@ -39,6 +39,7 @@ RESULT=$("$YT_DLP" "ytsearch${COUNT}:${QUERY}" \
         view_count,
         upload_date,
         live_status,
+        availability,
         description: (.description // "" | .[0:200])
     })')
 
@@ -66,6 +67,7 @@ echo "$RESULT" | "$JQ" -c '.[]' | while read -r line; do
         view_count,
         upload_date,
         live_status,
+        availability,
         description,
         source: "search",
         partial: true,

@@ -54,6 +54,7 @@ Get video details and generate content summary.
   "view_count": 1234567,
   "upload_date": "20240101",
   "language": "en",
+  "availability": "public",
   "description": "Video description (first 500 chars)",
   "has_subtitles": true,
   "subtitle_languages": ["en", "ja", "zh-Hant"],
@@ -75,6 +76,7 @@ Get video details and generate content summary.
 | `view_count` | Number of views |
 | `upload_date` | Upload date (YYYYMMDD) |
 | `language` | Primary language (ISO 639-1 code) |
+| `availability` | Access level: `public`, `unlisted`, `members_only`, `subscriber_only`, `needs_auth`, `premium_only`, `private` |
 | `description` | Video description (truncated to 500 chars) |
 | `has_subtitles` | Whether manual subtitles exist |
 | `subtitle_languages` | Array of available subtitle language codes |

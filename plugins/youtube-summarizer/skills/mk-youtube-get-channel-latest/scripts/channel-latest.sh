@@ -127,6 +127,7 @@ FINAL_OUTPUT=$(echo "$RESULT" | "$JQ" -s --argjson limit "$LIMIT" \
         view_count,
         upload_date,
         live_status,
+        availability,
         description: (.description // "" | .[0:200])
     })
     | unique_by(.video_id)
@@ -152,6 +153,7 @@ echo "$FINAL_OUTPUT" | "$JQ" -c '.[]' | while read -r line; do
         view_count,
         upload_date,
         live_status,
+        availability,
         description,
         source: "channel-latest",
         partial: true,
