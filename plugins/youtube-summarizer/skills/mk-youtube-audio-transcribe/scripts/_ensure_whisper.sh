@@ -4,6 +4,7 @@
 # Checks for whisper-cli in:
 #   1. System PATH
 #   2. bin/ directory (platform-specific binary)
+#   3. Auto-builds from source if not found
 #
 # Usage:
 #   source "$(dirname "$0")/_ensure_whisper.sh"
@@ -15,7 +16,7 @@
 #
 # Exit codes:
 #   0 - whisper-cli found (WHISPER variable is set)
-#   1 - whisper-cli not found (WHISPER_ERROR_JSON is set)
+#   1 - whisper-cli not found and build failed (WHISPER_ERROR_JSON is set)
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BIN_DIR="$SCRIPT_DIR/../bin"
@@ -69,16 +70,35 @@ find_whisper() {
 if WHISPER=$(find_whisper); then
     _WHISPER_EXIT_CODE=0
 else
-    # whisper-cli not found - prepare error info
-    WHISPER_ERROR_JSON=$(cat <<EOF
+    # whisper-cli not found - try auto-build
+    echo "[INFO] whisper-cli not found, building from source..." >&2
+    echo "[INFO] This may take a few minutes (requires cmake, git, Xcode CLT)..." >&2
+    if "$SCRIPT_DIR/_build_whisper.sh" >&2; then
+        # Re-check after build
+        if WHISPER=$(find_whisper); then
+            _WHISPER_EXIT_CODE=0
+        else
+            WHISPER_ERROR_JSON=$(cat <<EOF
 {
     "error_code": "WHISPER_NOT_FOUND",
-    "message": "whisper-cli not found. Please build or download it first.",
+    "message": "whisper-cli build succeeded but binary not found. Check build output.",
     "build_command": "$SCRIPT_DIR/_build_whisper.sh"
 }
 EOF
 )
-    _WHISPER_EXIT_CODE=1
+            _WHISPER_EXIT_CODE=1
+        fi
+    else
+        WHISPER_ERROR_JSON=$(cat <<EOF
+{
+    "error_code": "WHISPER_BUILD_FAILED",
+    "message": "whisper-cli not found and build failed. Prerequisites: cmake, git, Xcode CLT.",
+    "build_command": "$SCRIPT_DIR/_build_whisper.sh"
+}
+EOF
+)
+        _WHISPER_EXIT_CODE=1
+    fi
 fi
 
 # Export results

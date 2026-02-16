@@ -4,6 +4,7 @@
 # Checks for ffmpeg in:
 #   1. System PATH
 #   2. bin/ directory (platform-specific binary)
+#   3. Auto-downloads if not found
 #
 # Usage:
 #   source "$(dirname "$0")/_ensure_ffmpeg.sh"
@@ -15,7 +16,7 @@
 #
 # Exit codes:
 #   0 - ffmpeg found (FFMPEG variable is set)
-#   1 - ffmpeg not found (FFMPEG_ERROR_JSON is set)
+#   1 - ffmpeg not found and download failed (FFMPEG_ERROR_JSON is set)
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BIN_DIR="$SCRIPT_DIR/../bin"
@@ -69,17 +70,36 @@ find_ffmpeg() {
 if FFMPEG=$(find_ffmpeg); then
     _FFMPEG_EXIT_CODE=0
 else
-    # ffmpeg not found - prepare error info
-    FFMPEG_ERROR_JSON=$(cat <<EOF
+    # ffmpeg not found - try auto-download
+    echo "[INFO] ffmpeg not found, downloading..." >&2
+    if "$SCRIPT_DIR/_download_ffmpeg.sh" >&2; then
+        # Re-check after download
+        if FFMPEG=$(find_ffmpeg); then
+            _FFMPEG_EXIT_CODE=0
+        else
+            FFMPEG_ERROR_JSON=$(cat <<EOF
 {
     "error_code": "FFMPEG_NOT_FOUND",
-    "message": "ffmpeg not found. Please build or download it first.",
+    "message": "ffmpeg download succeeded but binary not found. Check platform support.",
     "download_command": "$SCRIPT_DIR/_download_ffmpeg.sh",
     "build_command": "$SCRIPT_DIR/_build_ffmpeg.sh"
 }
 EOF
 )
-    _FFMPEG_EXIT_CODE=1
+            _FFMPEG_EXIT_CODE=1
+        fi
+    else
+        FFMPEG_ERROR_JSON=$(cat <<EOF
+{
+    "error_code": "FFMPEG_DOWNLOAD_FAILED",
+    "message": "ffmpeg not found and download failed. Please install manually.",
+    "download_command": "$SCRIPT_DIR/_download_ffmpeg.sh",
+    "build_command": "$SCRIPT_DIR/_build_ffmpeg.sh"
+}
+EOF
+)
+        _FFMPEG_EXIT_CODE=1
+    fi
 fi
 
 # Export results

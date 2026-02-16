@@ -4,6 +4,7 @@
 # Checks for jq in:
 #   1. System PATH
 #   2. bin/ directory (platform-specific binary)
+#   3. Auto-downloads if not found
 #
 # Usage:
 #   source "$(dirname "$0")/_utility__ensure_jq.sh"
@@ -15,7 +16,7 @@
 #
 # Exit codes:
 #   0 - jq found (JQ variable is set)
-#   1 - jq not found (JQ_ERROR_JSON is set)
+#   1 - jq not found and download failed (JQ_ERROR_JSON is set)
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BIN_DIR="$SCRIPT_DIR/../bin"
@@ -81,16 +82,34 @@ find_jq() {
 if JQ=$(find_jq); then
     _JQ_EXIT_CODE=0
 else
-    # jq not found - prepare error info
-    JQ_ERROR_JSON=$(cat <<EOF
+    # jq not found - try auto-download
+    echo "[INFO] jq not found, downloading..." >&2
+    if "$SCRIPT_DIR/_utility__download_jq.sh" >&2; then
+        # Re-check after download
+        if JQ=$(find_jq); then
+            _JQ_EXIT_CODE=0
+        else
+            JQ_ERROR_JSON=$(cat <<EOF
 {
     "error_code": "JQ_NOT_FOUND",
-    "message": "jq not found. Please download it first.",
+    "message": "jq download succeeded but binary not found. Check platform support.",
     "download_command": "$SCRIPT_DIR/_utility__download_jq.sh"
 }
 EOF
 )
-    _JQ_EXIT_CODE=1
+            _JQ_EXIT_CODE=1
+        fi
+    else
+        JQ_ERROR_JSON=$(cat <<EOF
+{
+    "error_code": "JQ_DOWNLOAD_FAILED",
+    "message": "jq not found and download failed. Please install manually.",
+    "download_command": "$SCRIPT_DIR/_utility__download_jq.sh"
+}
+EOF
+)
+        _JQ_EXIT_CODE=1
+    fi
 fi
 
 # Export results

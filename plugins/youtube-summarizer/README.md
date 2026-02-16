@@ -17,9 +17,9 @@ Claude Code plugin for YouTube video tools - search, info, transcript, audio dow
 
 ## Features
 
-- **Smart dependency management**: Uses system `yt-dlp` and `jq` if available, falls back to bundled binaries
+- **Smart dependency management**: Uses system `yt-dlp` and `jq` if available, auto-downloads on first run
 - **Cross-platform**: Supports macOS (Intel/ARM), Linux (AMD64/ARM64), and Windows
-- **Offline-ready**: Pre-bundled platform-specific binaries for immediate use
+- **Auto-provisioning**: Dependencies auto-download or build when missing
 - **Independent skills**: Each skill is self-contained with its own dependencies
 - **LLM-friendly output**: JSON output for easy parsing
 - **Centralized metadata storage**: Video metadata shared across all skills via `/tmp/monkey_knowledge/youtube/meta/`
@@ -66,11 +66,14 @@ plugins/youtube-summarizer/
 │  1. Check system yt-dlp (command -v yt-dlp)         │
 │     ├── Found → Use system version                  │
 │     └── Not found ↓                                 │
-│  2. Check bin/ for bundled binary                   │
+│  2. Check bin/ for existing binary                  │
 │     ├── yt-dlp-macos (universal)                    │
 │     └── yt-dlp-darwin-arm64 (platform-specific)     │
-│     ├── Found → Use bundled version                 │
-│     └── Not found → Error                           │
+│     ├── Found → Use existing binary                 │
+│     └── Not found ↓                                 │
+│  3. Auto-download from GitHub releases              │
+│     ├── Success → Use downloaded binary             │
+│     └── Failed → Error                              │
 └─────────────────────────────────────────────────────┘
 ```
 
@@ -84,14 +87,17 @@ plugins/youtube-summarizer/
 │  1. Check system jq (command -v jq)                 │
 │     ├── Found → Use system version                  │
 │     └── Not found ↓                                 │
-│  2. Check bin/ for bundled binary                   │
+│  2. Check bin/ for existing binary                  │
 │     ├── jq-macos-arm64                              │
 │     ├── jq-macos-amd64                              │
 │     ├── jq-linux-amd64                              │
 │     ├── jq-linux-arm64                              │
 │     └── jq-win64.exe                                │
-│     ├── Found → Use bundled version                 │
-│     └── Not found → Error                           │
+│     ├── Found → Use existing binary                 │
+│     └── Not found ↓                                 │
+│  3. Auto-download from GitHub releases              │
+│     ├── Success → Use downloaded binary             │
+│     └── Failed → Error                              │
 └─────────────────────────────────────────────────────┘
 ```
 

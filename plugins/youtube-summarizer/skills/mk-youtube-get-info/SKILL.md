@@ -89,7 +89,7 @@ This skill automatically saves video metadata to `/tmp/monkey_knowledge/youtube/
 
 ## Notes
 
-- Uses system yt-dlp/jq if available, otherwise uses bundled binaries
+- Uses system yt-dlp/jq if available, otherwise auto-downloads on first run
 
 ## Next Step
 

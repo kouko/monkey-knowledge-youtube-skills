@@ -4,6 +4,7 @@
 # Checks for yt-dlp in:
 #   1. System PATH
 #   2. bin/ directory (universal or platform-specific binary)
+#   3. Auto-downloads if not found
 #
 # Usage:
 #   source "$(dirname "$0")/_utility__ensure_ytdlp.sh"
@@ -15,7 +16,7 @@
 #
 # Exit codes:
 #   0 - yt-dlp found (YT_DLP variable is set)
-#   1 - yt-dlp not found (YTDLP_ERROR_JSON is set)
+#   1 - yt-dlp not found and download failed (YTDLP_ERROR_JSON is set)
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BIN_DIR="$SCRIPT_DIR/../bin"
@@ -104,17 +105,36 @@ find_ytdlp() {
 if YT_DLP=$(find_ytdlp); then
     _YTDLP_EXIT_CODE=0
 else
-    # yt-dlp not found - prepare error info
-    YTDLP_ERROR_JSON=$(cat <<EOF
+    # yt-dlp not found - try auto-download
+    echo "[INFO] yt-dlp not found, downloading..." >&2
+    if "$SCRIPT_DIR/_utility__download_ytdlp.sh" >&2; then
+        # Re-check after download
+        if YT_DLP=$(find_ytdlp); then
+            _YTDLP_EXIT_CODE=0
+        else
+            YTDLP_ERROR_JSON=$(cat <<EOF
 {
     "error_code": "YTDLP_NOT_FOUND",
-    "message": "yt-dlp not found. Please download it first.",
+    "message": "yt-dlp download succeeded but binary not found. Check platform support.",
     "download_command": "$SCRIPT_DIR/_utility__download_ytdlp.sh",
     "build_command": "$SCRIPT_DIR/_utility__build_ytdlp.sh"
 }
 EOF
 )
-    _YTDLP_EXIT_CODE=1
+            _YTDLP_EXIT_CODE=1
+        fi
+    else
+        YTDLP_ERROR_JSON=$(cat <<EOF
+{
+    "error_code": "YTDLP_DOWNLOAD_FAILED",
+    "message": "yt-dlp not found and download failed. Please install manually.",
+    "download_command": "$SCRIPT_DIR/_utility__download_ytdlp.sh",
+    "build_command": "$SCRIPT_DIR/_utility__build_ytdlp.sh"
+}
+EOF
+)
+        _YTDLP_EXIT_CODE=1
+    fi
 fi
 
 # Export results

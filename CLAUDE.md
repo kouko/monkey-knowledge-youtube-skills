@@ -20,12 +20,13 @@
 skill-name/
 ├── SKILL.md           # Claude Code 技能定義（YAML frontmatter）
 ├── README.md          # 詳細文檔
-├── bin/               # 預編譯的 platform-specific binaries
+├── bin/               # Platform-specific binaries（自動下載或預編譯）
 │   ├── jq-macos-arm64
 │   ├── yt-dlp-darwin-arm64
 │   └── ...
 └── scripts/
-    ├── _ensure_*.sh   # 依賴管理腳本
+    ├── _ensure_*.sh   # 依賴管理腳本（含自動下載邏輯）
+    ├── _download_*.sh # 下載腳本
     └── main.sh        # 主要邏輯腳本
 ```
 
@@ -172,7 +173,8 @@ fi
 | 優先順序 | 來源 | 說明 |
 |---------|------|------|
 | 1 | 系統版本 | `command -v tool` |
-| 2 | bin/ 目錄 | 預編譯的 platform-specific binary |
+| 2 | bin/ 目錄 | 已存在的 platform-specific binary |
+| 3 | 自動下載/build | 執行 `_download_*.sh` 或 `_build_*.sh` |
 
 ### 平台支援
 
@@ -253,7 +255,7 @@ claude --plugin-dir /path/to/monkey-knowledge-skills/plugins/youtube-summarizer
 
 參考 `plugins/youtube-summarizer/` 的實作：
 - 8 個獨立 skills（search、get-info、get-caption、get-audio、get-channel-latest、audio-transcribe、transcript-summarize、summarize）
-- 預打包依賴（platform-specific binaries 已含在 bin/）
+- 智能依賴管理（系統優先，自動下載/build 作為 fallback）
 - 統一 JSON 輸出格式
 - 集中式 Metadata 儲存
 - 統一檔案命名規範

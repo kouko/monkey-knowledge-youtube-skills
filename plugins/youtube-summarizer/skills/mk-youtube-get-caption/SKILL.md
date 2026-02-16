@@ -102,7 +102,7 @@ Example: `20091025__dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.en.srt`
 
 ## Notes
 
-- Uses system yt-dlp/jq if available, otherwise uses bundled binaries
+- Uses system yt-dlp/jq if available, otherwise auto-downloads on first run
 - Some videos may not have subtitles
 - Manual subtitles are prioritized over auto-generated ones
 - Auto-generated subtitles may be less accurate

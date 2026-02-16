@@ -96,5 +96,5 @@ Note: In `fast` mode, `upload_date`, `live_status`, and `description` will be `n
 
 - Default result limit: 10 videos
 - Default mode: `fast` (use `full` for time-sensitive searches)
-- Uses system yt-dlp/jq if available, otherwise uses bundled binaries
+- Uses system yt-dlp/jq if available, otherwise auto-downloads on first run
 - Search results are saved to centralized metadata store for use by other skills (only in `full` mode)

@@ -38,9 +38,9 @@ mk-youtube-audio-transcribe/
 
 | Dependency | Purpose | Location |
 |------------|---------|----------|
-| ffmpeg | Audio conversion | System or bin/ |
-| whisper-cli | Speech-to-text | System or bin/ |
-| jq | JSON formatting | System or bundled binary |
+| ffmpeg | Audio conversion | System or auto-download |
+| whisper-cli | Speech-to-text | System or auto-build |
+| jq | JSON formatting | System or auto-download |
 
 ## Script: `transcribe.sh`
 

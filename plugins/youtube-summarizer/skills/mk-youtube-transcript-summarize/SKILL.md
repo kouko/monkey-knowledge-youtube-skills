@@ -225,6 +225,6 @@ The script automatically extracts video metadata from the centralized metadata s
 ## Notes
 
 - This skill does NOT download videos or subtitles — use `/mk-youtube-get-caption` first to obtain a transcript file
-- Uses system jq if available, otherwise uses bundled binary
+- Uses system jq if available, otherwise auto-downloads on first run
 - For best results, combine with `/mk-youtube-get-info` to include the Video Info table in the summary
 - Summary is automatically saved to `/tmp/monkey_knowledge/youtube/summaries/` directory
