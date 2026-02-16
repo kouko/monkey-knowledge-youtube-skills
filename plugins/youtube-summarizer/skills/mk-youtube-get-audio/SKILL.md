@@ -125,7 +125,7 @@ Supported browsers:
 
 ## Notes
 
-- On first run, if yt-dlp or jq is not installed, it will be auto-downloaded
+- Uses system yt-dlp/jq if available, otherwise uses bundled binaries
 - No ffmpeg required (uses best available format without conversion)
 - Output format depends on source (typically m4a, webm, or opus)
 - Cookie fallback only activates when initial download fails

@@ -40,7 +40,7 @@ mk-youtube-audio-transcribe/
 |------------|---------|----------|
 | ffmpeg | Audio conversion | System or bin/ |
 | whisper-cli | Speech-to-text | System or bin/ |
-| jq | JSON formatting | System or auto-download |
+| jq | JSON formatting | System or bundled binary |
 
 ## Script: `transcribe.sh`
 
