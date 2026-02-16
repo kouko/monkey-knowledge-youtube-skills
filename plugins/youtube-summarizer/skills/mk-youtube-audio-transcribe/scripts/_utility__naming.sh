@@ -5,8 +5,8 @@
 get_base_tmp() {
     case "$(uname -s)" in
         Darwin|Linux)
-            # macOS/Linux: respect TMPDIR environment variable
-            echo "${TMPDIR:-/tmp}"
+            # macOS/Linux: use fixed /tmp for cache consistency
+            echo "/tmp"
             ;;
         MINGW*|MSYS*|CYGWIN*)
             # Windows: use Windows temp directory
