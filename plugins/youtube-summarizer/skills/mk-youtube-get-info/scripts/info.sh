@@ -26,12 +26,12 @@ BASENAME=$(make_basename "$UPLOAD_DATE" "$VIDEO_ID" "$TITLE")
 META_JSON=$(echo "$RAW_META" | "$JQ" '{
     video_id: .id,
     title,
+    url: .webpage_url,
     channel,
     channel_url,
-    url: .webpage_url,
-    upload_date,
     duration_string,
     view_count,
+    upload_date,
     description: .description[0:500],
     language,
     has_subtitles: ((.subtitles | keys | length) > 0),
@@ -46,12 +46,13 @@ META_JSON=$(echo "$RAW_META" | "$JQ" '{
 # Write or merge metadata (complete data always updates)
 write_or_merge_meta "$META_DIR/$BASENAME.meta.json" "$META_JSON" "false"
 
-# Output JSON (same as before, with added video_id and url fields)
+# Output JSON
 echo "$RAW_META" | "$JQ" '{
     video_id: .id,
-    url: .webpage_url,
     title,
+    url: .webpage_url,
     channel,
+    channel_url,
     duration_string,
     view_count,
     upload_date,

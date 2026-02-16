@@ -43,9 +43,9 @@ Get video details and generate content summary.
 {
   "video_id": "dQw4w9WgXcQ",
   "title": "Video Title",
+  "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
   "channel": "Channel Name",
   "channel_url": "https://www.youtube.com/channel/UCuAXFkgsw1L7xaCfnd5JJOw",
-  "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
   "duration_string": "10:30",
   "view_count": 1234567,
   "upload_date": "20240101",
@@ -64,9 +64,9 @@ Get video details and generate content summary.
 |-------|-------------|
 | `video_id` | YouTube video ID |
 | `title` | Video title |
+| `url` | Full video URL |
 | `channel` | Channel name |
 | `channel_url` | Channel URL |
-| `url` | Full video URL |
 | `duration_string` | Duration (e.g., "10:30") |
 | `view_count` | Number of views |
 | `upload_date` | Upload date (YYYYMMDD) |

@@ -76,14 +76,14 @@ Note: Upload Date is only available in `full` mode.
 ```json
 [
   {
-    "id": "dQw4w9WgXcQ",
+    "video_id": "dQw4w9WgXcQ",
     "title": "Video Title",
     "url": "https://www.youtube.com/watch?v=...",
+    "channel": "Channel Name",
+    "channel_url": "https://www.youtube.com/channel/UC...",
     "duration_string": "10:23",
     "view_count": 1234567,
     "upload_date": "20240115",
-    "channel": "Channel Name",
-    "channel_url": "https://www.youtube.com/channel/UC...",
     "live_status": "not_live",
     "description": "First 200 chars..."
   }

@@ -77,14 +77,14 @@ mk-youtube-get-channel-latest/
 ```json
 [
   {
-    "id": "dQw4w9WgXcQ",
+    "video_id": "dQw4w9WgXcQ",
     "title": "Video Title",
     "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    "channel": "Channel Name",
+    "channel_url": "https://www.youtube.com/channel/UC...",
     "duration_string": "3:32",
     "view_count": 1500000000,
     "upload_date": "20091025",
-    "channel": "Channel Name",
-    "channel_url": "https://www.youtube.com/channel/UC...",
     "live_status": "not_live",
     "description": "First 200 chars..."
   }
@@ -103,14 +103,14 @@ mk-youtube-get-channel-latest/
 
 | Field | Type | Description |
 |-------|------|-------------|
-| id | string | YouTube video ID |
+| video_id | string | YouTube video ID |
 | title | string | Video title |
 | url | string | Full YouTube URL |
+| channel | string | Channel name |
+| channel_url | string | Channel URL |
 | duration_string | string | Human-readable duration (e.g., "10:23") |
 | view_count | number | View count (may be null for upcoming) |
 | upload_date | string | Upload date in YYYYMMDD format |
-| channel | string | Channel name |
-| channel_url | string | Channel URL |
 | live_status | string | not_live, is_live, was_live, is_upcoming |
 | description | string | First 200 characters of description |
 

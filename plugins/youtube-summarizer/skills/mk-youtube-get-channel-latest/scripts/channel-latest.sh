@@ -118,18 +118,18 @@ fi
 FINAL_OUTPUT=$(echo "$RESULT" | "$JQ" -s --argjson limit "$LIMIT" \
     --arg channel_name "$CHANNEL_NAME" --arg channel_url "$CHANNEL_URL" '
     map({
-        id,
+        video_id: .id,
         title,
         url: .webpage_url,
+        channel: $channel_name,
+        channel_url: $channel_url,
         duration_string,
         view_count,
         upload_date,
-        channel: $channel_name,
-        channel_url: $channel_url,
         live_status,
         description: (.description // "" | .[0:200])
     })
-    | unique_by(.id)
+    | unique_by(.video_id)
     | sort_by(.upload_date) | reverse
     | .[:$limit]
 ')
@@ -137,22 +137,22 @@ FINAL_OUTPUT=$(echo "$RESULT" | "$JQ" -s --argjson limit "$LIMIT" \
 # Write metadata for each video to centralized store (partial data, won't overwrite complete)
 mkdir -p "$META_DIR"
 echo "$FINAL_OUTPUT" | "$JQ" -c '.[]' | while read -r line; do
-    VIDEO_ID=$(echo "$line" | "$JQ" -r '.id')
+    VIDEO_ID=$(echo "$line" | "$JQ" -r '.video_id')
     TITLE=$(echo "$line" | "$JQ" -r '.title')
     UPLOAD_DATE=$(echo "$line" | "$JQ" -r '.upload_date')
     BASENAME=$(make_basename "$UPLOAD_DATE" "$VIDEO_ID" "$TITLE")
 
     META_JSON=$(echo "$line" | "$JQ" '{
-        video_id: .id,
+        video_id,
         title,
+        url,
         channel,
         channel_url,
-        url,
-        upload_date,
         duration_string,
         view_count,
-        description,
+        upload_date,
         live_status,
+        description,
         source: "channel-latest",
         partial: true,
         fetched_at: (now | todate)

@@ -74,9 +74,10 @@ Priority:
 ```json
 {
   "video_id": "dQw4w9WgXcQ",
-  "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
   "title": "Video Title",
+  "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
   "channel": "Channel Name",
+  "channel_url": "https://www.youtube.com/channel/UC...",
   "duration_string": "10:23",
   "view_count": 1234567,
   "upload_date": "20240101",
@@ -94,9 +95,10 @@ Priority:
 | Field | Type | Description |
 |-------|------|-------------|
 | video_id | string | YouTube video ID |
-| url | string | Full video URL |
 | title | string | Video title |
+| url | string | Full video URL |
 | channel | string | Channel name |
+| channel_url | string | Channel URL |
 | duration_string | string | Duration in HH:MM:SS or MM:SS format |
 | view_count | number | Total view count |
 | upload_date | string | Upload date in YYYYMMDD format |
