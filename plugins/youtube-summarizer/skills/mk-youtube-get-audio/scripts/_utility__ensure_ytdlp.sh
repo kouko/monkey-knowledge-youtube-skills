@@ -144,19 +144,19 @@ find_ytdlp() {
         fi
     fi
 
-    # 3. Check bin/ directory - platform-specific binary first (smaller)
-    local platform_binary_name
-    platform_binary_name=$(get_ytdlp_platform_binary_name)
-    if [ -n "$platform_binary_name" ] && [ -x "$BIN_DIR/$platform_binary_name" ]; then
-        echo "$BIN_DIR/$platform_binary_name"
-        return 0
-    fi
-
-    # 4. Check bin/ directory - universal binary (official release)
+    # 3. Check bin/ directory - universal binary (official release, preferred)
     local binary_name
     binary_name=$(get_ytdlp_binary_name)
     if [ -n "$binary_name" ] && [ -x "$BIN_DIR/$binary_name" ]; then
         echo "$BIN_DIR/$binary_name"
+        return 0
+    fi
+
+    # 4. Check bin/ directory - platform-specific binary (local build fallback)
+    local platform_binary_name
+    platform_binary_name=$(get_ytdlp_platform_binary_name)
+    if [ -n "$platform_binary_name" ] && [ -x "$BIN_DIR/$platform_binary_name" ]; then
+        echo "$BIN_DIR/$platform_binary_name"
         return 0
     fi
 

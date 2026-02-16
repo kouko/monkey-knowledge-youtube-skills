@@ -81,17 +81,19 @@ download_ffmpeg() {
         exit 1
     fi
 
-    cp "$ffmpeg_bin" "$BIN_DIR/ffmpeg"
-    chmod +x "$BIN_DIR/ffmpeg"
+    local output_name="ffmpeg-darwin-${arch}"
+    cp "$ffmpeg_bin" "$BIN_DIR/$output_name"
+    chmod +x "$BIN_DIR/$output_name"
 
     echo "[INFO] Cleaning up..." >&2
     rm -rf "$temp_dir"
 
-    echo "[INFO] ffmpeg installed: $BIN_DIR/ffmpeg" >&2
+    echo "[INFO] ffmpeg installed: $BIN_DIR/$output_name" >&2
     echo "[INFO] Architecture: $arch (native)" >&2
 }
 
 download_ffmpeg
 
+ARCH=$(get_arch)
 echo "[SUCCESS] Download complete!" >&2
-"$BIN_DIR/ffmpeg" -version 2>&1 | head -1
+"$BIN_DIR/ffmpeg-darwin-${ARCH}" -version 2>&1 | head -1
