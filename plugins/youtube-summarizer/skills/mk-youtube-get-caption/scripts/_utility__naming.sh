@@ -3,15 +3,26 @@
 
 # Portable temp directory handling
 get_base_tmp() {
-    if [ -n "$TMPDIR" ]; then
-        echo "$TMPDIR"
-    elif [ -n "$TEMP" ]; then
-        echo "$TEMP"
-    elif [ -n "$TMP" ]; then
-        echo "$TMP"
-    else
-        echo "/tmp"
-    fi
+    case "$(uname -s)" in
+        Darwin|Linux)
+            # macOS/Linux: use fixed /tmp path
+            echo "/tmp"
+            ;;
+        MINGW*|MSYS*|CYGWIN*)
+            # Windows: use Windows temp directory
+            if [ -n "$TEMP" ]; then
+                echo "$TEMP"
+            elif [ -n "$TMP" ]; then
+                echo "$TMP"
+            else
+                echo "/tmp"
+            fi
+            ;;
+        *)
+            # Other platforms: fallback to /tmp
+            echo "/tmp"
+            ;;
+    esac
 }
 
 # Centralized directories (all skills share monkey_knowledge base)
@@ -24,13 +35,17 @@ sanitize_title() {
     local title="$1"
     local max_length="${2:-80}"
 
-    echo "$title" | \
-        tr '\n\r' ' ' |                    # 換行 → 空格
-        tr -d '/:*?"<>|\\' |               # 移除 ASCII 檔案系統禁用字元
-        sed 's/[""''！？｜：]//g' |         # 移除 Unicode 標點（中文引號、全形符號）
-        tr -s ' ' '_' |                    # 連續空格 → 單底線
-        sed 's/^_//; s/_$//' |             # 移除首尾底線
-        cut -c1-"$max_length"              # 截斷長度
+    # Subshell to avoid leaking LC_ALL to parent
+    (
+        export LC_ALL=en_US.UTF-8
+        printf '%s' "$title" | \
+            tr '\n\r' ' ' |                    # 換行 → 空格
+            tr -d '/:*?"<>|\\' |               # 移除 ASCII 檔案系統禁用字元
+            sed 's/[""''！？｜：]//g' |         # 移除 Unicode 標點（中文引號、全形符號）
+            tr -s ' ' '_' |                    # 連續空格 → 單底線
+            sed 's/^_//; s/_$//' |             # 移除首尾底線
+            cut -c1-"$max_length"              # 截斷長度
+    )
 }
 
 # 生成統一檔案名稱基底（含日期前綴）

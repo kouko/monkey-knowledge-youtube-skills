@@ -94,7 +94,7 @@ OUTPUT_DIR="$MONKEY_KNOWLEDGE_TMP/youtube/transcribe"
 mkdir -p "$OUTPUT_DIR"
 
 # Generate output filename from audio file (preserving unified naming)
-BASENAME=$(basename "$AUDIO_FILE" | sed 's/\.[^.]*$//')
+BASENAME=$(LC_ALL=en_US.UTF-8 basename "$AUDIO_FILE" | LC_ALL=en_US.UTF-8 sed 's/\.[^.]*$//')
 JSON_OUTPUT="$OUTPUT_DIR/${BASENAME}.json"
 TEXT_OUTPUT="$OUTPUT_DIR/${BASENAME}.txt"
 

@@ -100,7 +100,7 @@ fi
 
 if [ -n "$TEMP_SRT" ] && [ -f "$TEMP_SRT" ]; then
     # Extract language from filename (e.g., VIDEO_ID.en.srt -> en)
-    DETECTED_LANG=$(basename "$TEMP_SRT" | sed 's/.*\.\([^.]*\)\.srt$/\1/')
+    DETECTED_LANG=$(LC_ALL=en_US.UTF-8 basename "$TEMP_SRT" | LC_ALL=en_US.UTF-8 sed 's/.*\.\([^.]*\)\.srt$/\1/')
 
     # Rename to unified format: {id}__{title}.{lang}.srt
     SRT_FILE="$OUTPUT_DIR/${BASENAME}.${DETECTED_LANG}.srt"
@@ -108,7 +108,7 @@ if [ -n "$TEMP_SRT" ] && [ -f "$TEMP_SRT" ]; then
 
     # Generate plain text version (remove sequence numbers, timestamps, empty lines)
     TEXT_FILE="${SRT_FILE%.srt}.txt"
-    sed '/^[0-9]*$/d; /-->/d; /^[[:space:]]*$/d' "$SRT_FILE" | uniq > "$TEXT_FILE"
+    LC_ALL=en_US.UTF-8 sed '/^[0-9]*$/d; /-->/d; /^[[:space:]]*$/d' "$SRT_FILE" | uniq > "$TEXT_FILE"
 
     # Clean up temp directory
     rm -rf "$TEMP_DIR"
