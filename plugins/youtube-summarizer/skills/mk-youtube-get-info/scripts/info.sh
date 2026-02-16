@@ -20,7 +20,7 @@ RAW_META=$("$YT_DLP" -j --no-download "$URL" 2>/dev/null)
 VIDEO_ID=$(echo "$RAW_META" | "$JQ" -r '.id')
 TITLE=$(echo "$RAW_META" | "$JQ" -r '.title')
 UPLOAD_DATE=$(echo "$RAW_META" | "$JQ" -r '.upload_date')
-BASENAME=$(make_basename "$UPLOAD_DATE" "$VIDEO_ID" "$TITLE")
+BASENAME=$(make_basename "$UPLOAD_DATE" "$VIDEO_ID")
 
 # Build metadata JSON for storage (complete data)
 META_JSON=$(echo "$RAW_META" | "$JQ" '{

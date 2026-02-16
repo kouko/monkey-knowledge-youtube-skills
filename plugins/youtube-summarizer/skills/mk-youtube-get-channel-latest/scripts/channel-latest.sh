@@ -140,7 +140,7 @@ echo "$FINAL_OUTPUT" | "$JQ" -c '.[]' | while read -r line; do
     VIDEO_ID=$(echo "$line" | "$JQ" -r '.video_id')
     TITLE=$(echo "$line" | "$JQ" -r '.title')
     UPLOAD_DATE=$(echo "$line" | "$JQ" -r '.upload_date')
-    BASENAME=$(make_basename "$UPLOAD_DATE" "$VIDEO_ID" "$TITLE")
+    BASENAME=$(make_basename "$UPLOAD_DATE" "$VIDEO_ID")
 
     META_JSON=$(echo "$line" | "$JQ" '{
         video_id,

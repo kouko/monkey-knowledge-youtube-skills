@@ -281,18 +281,18 @@ claude --plugin-dir /path/to/monkey-knowledge-skills/plugins/youtube-summarizer
 #### 目錄結構
 
 ```
-$TMPDIR/monkey_knowledge/        # 或 /tmp/monkey_knowledge/
+/tmp/monkey_knowledge/
 ├── youtube/
 │   ├── meta/                    # 集中式 metadata 儲存
-│   │   └── {YYYYMMDD}__{video_id}__{title}.meta.json
+│   │   └── {YYYYMMDD}__{video_id}.meta.json
 │   ├── captions/                # 字幕檔案
-│   │   └── {YYYYMMDD}__{video_id}__{title}.{lang}.{srt|txt}
+│   │   └── {YYYYMMDD}__{video_id}.{lang}.{srt|txt}
 │   ├── audio/                   # 音訊檔案
-│   │   └── {YYYYMMDD}__{video_id}__{title}.{ext}
+│   │   └── {YYYYMMDD}__{video_id}.{ext}
 │   ├── transcribe/              # 轉錄結果
-│   │   └── {YYYYMMDD}__{video_id}__{title}.{json|txt}
+│   │   └── {YYYYMMDD}__{video_id}.{json|txt}
 │   └── summaries/               # 摘要檔案
-│       └── {YYYYMMDD}__{video_id}__{title}.{lang}.md
+│       └── {YYYYMMDD}__{video_id}.{lang}.md
 └── build/                       # 建置過程暫存
     ├── whisper-cpp-$$/
     ├── whisper-transcribe-$$/
@@ -301,7 +301,7 @@ $TMPDIR/monkey_knowledge/        # 或 /tmp/monkey_knowledge/
 
 #### Metadata JSON 格式
 
-`$TMPDIR/monkey_knowledge/youtube/meta/{YYYYMMDD}__{video_id}__{title}.meta.json`：
+`/tmp/monkey_knowledge/youtube/meta/{YYYYMMDD}__{video_id}.meta.json`：
 
 ```json
 {
@@ -345,50 +345,33 @@ $TMPDIR/monkey_knowledge/        # 或 /tmp/monkey_knowledge/
 #### 命名格式
 
 ```
-{YYYYMMDD}__{video_id}__{sanitized_title}.{content_type}.{extension}
+{YYYYMMDD}__{video_id}.{content_type}.{extension}
 ```
 
 日期前綴 `{YYYYMMDD}` 為影片上傳日期，使檔案自然排序。
+檔名不包含標題，避免特殊字元造成路徑問題。標題資訊儲存於 metadata JSON。
 
 #### 命名範例
 
 | 檔案類型 | 命名範例 |
 |---------|---------|
-| Metadata | `20091025__dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.meta.json` |
-| 字幕 (SRT) | `20091025__dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.en.srt` |
-| 字幕 (TXT) | `20091025__dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.en.txt` |
-| 音訊 | `20091025__dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.m4a` |
-| 轉錄 (JSON) | `20091025__dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.json` |
-| 轉錄 (TXT) | `20091025__dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.txt` |
-| 摘要 | `20091025__dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.en.md` |
-
-#### Title 清理規則
-
-```bash
-sanitize_title() {
-    local title="$1"
-    local max_length="${2:-80}"
-
-    echo "$title" | \
-        tr '\n\r' ' ' |                    # 換行 → 空格
-        tr -d '/:*?"<>|\\' |               # 移除 ASCII 檔案系統禁用字元
-        sed 's/[""''！？｜：]//g' |         # 移除 Unicode 標點（中文引號、全形符號）
-        tr -s ' ' '_' |                    # 連續空格 → 單底線
-        sed 's/^_//; s/_$//' |             # 移除首尾底線
-        cut -c1-"$max_length"              # 截斷長度
-}
-```
+| Metadata | `20091025__dQw4w9WgXcQ.meta.json` |
+| 字幕 (SRT) | `20091025__dQw4w9WgXcQ.en.srt` |
+| 字幕 (TXT) | `20091025__dQw4w9WgXcQ.en.txt` |
+| 音訊 | `20091025__dQw4w9WgXcQ.m4a` |
+| 轉錄 (JSON) | `20091025__dQw4w9WgXcQ.json` |
+| 轉錄 (TXT) | `20091025__dQw4w9WgXcQ.txt` |
+| 摘要 | `20091025__dQw4w9WgXcQ.en.md` |
 
 #### 長度限制
 
 | 組成 | 長度 |
 |------|------|
 | 日期前綴 | 8 字元（YYYYMMDD） |
-| 分隔符 | 4 字元（`__` x 2） |
+| 分隔符 | 2 字元（`__`） |
 | Video ID | 11 字元（固定） |
-| Title | 最多 80 字元 |
 | Content type + ext | 最多 20 字元 |
-| **總計** | ≤ 123 字元 ✅ |
+| **總計** | ≤ 41 字元 ✅ |
 
 ### 共用腳本命名規範（`_utility__` 前綴）
 
@@ -449,11 +432,11 @@ All utility scripts are in sync.
 
 | 函式 | 用途 |
 |------|------|
-| `sanitize_title "$TITLE" [max_length]` | 清理標題用於檔案名稱 |
-| `make_basename "$UPLOAD_DATE" "$VIDEO_ID" "$TITLE"` | 生成統一檔案名稱基底（含日期前綴） |
-| `extract_video_id_from_basename "$BASENAME"` | 從 basename 提取 video_id（跳過日期前綴） |
+| `make_basename "$UPLOAD_DATE" "$VIDEO_ID"` | 生成統一檔案名稱基底（日期 + Video ID） |
+| `extract_video_id_from_basename "$BASENAME"` | 從 basename 提取 video_id |
 | `write_or_merge_meta "$FILE" "$JSON" "$IS_PARTIAL"` | 寫入或合併 metadata |
 | `find_meta_by_id "$VIDEO_ID"` | 依 video_id 尋找 metadata 檔案 |
+| `find_file_by_id "$DIR" "$VIDEO_ID" "$PATTERN"` | 依 video_id 尋找檔案 |
 | `read_meta "$VIDEO_ID"` | 讀取 metadata JSON |
 
 #### 使用方式
@@ -461,9 +444,9 @@ All utility scripts are in sync.
 ```bash
 source "$(dirname "$0")/_utility__naming.sh"
 
-# 生成檔名（含日期前綴）
-BASENAME=$(make_basename "$UPLOAD_DATE" "$VIDEO_ID" "$TITLE")
-# 輸出: 20091025__dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up
+# 生成檔名（日期 + Video ID）
+BASENAME=$(make_basename "$UPLOAD_DATE" "$VIDEO_ID")
+# 輸出: 20091025__dQw4w9WgXcQ
 
 # 從檔名提取 video_id
 VIDEO_ID=$(extract_video_id_from_basename "$BASENAME")
@@ -483,7 +466,7 @@ write_or_merge_meta "$META_DIR/$BASENAME.meta.json" "$META_JSON" "true"
 ```json
 {
   "status": "success",
-  "file_path": "/tmp/youtube-audio/20091025__dQw4w9WgXcQ__Video_Title.m4a",
+  "file_path": "/tmp/monkey_knowledge/youtube/audio/20091025__dQw4w9WgXcQ.m4a",
   "video_id": "dQw4w9WgXcQ",
   "title": "Video Title",
   "channel": "Channel Name",

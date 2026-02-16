@@ -40,7 +40,7 @@ if [ -z "$VIDEO_ID" ]; then
     exit 1
 fi
 
-BASENAME=$(make_basename "$UPLOAD_DATE" "$VIDEO_ID" "$TITLE")
+BASENAME=$(make_basename "$UPLOAD_DATE" "$VIDEO_ID")
 
 # Read existing metadata or create entry
 EXISTING_META=$(read_meta "$VIDEO_ID")

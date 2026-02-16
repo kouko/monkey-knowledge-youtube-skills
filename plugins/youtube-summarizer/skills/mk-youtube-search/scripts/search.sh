@@ -54,7 +54,7 @@ echo "$RESULT" | "$JQ" -c '.[]' | while read -r line; do
         continue
     fi
 
-    BASENAME=$(make_basename "$UPLOAD_DATE" "$VIDEO_ID" "$TITLE")
+    BASENAME=$(make_basename "$UPLOAD_DATE" "$VIDEO_ID")
 
     META_JSON=$(echo "$line" | "$JQ" '{
         video_id,
