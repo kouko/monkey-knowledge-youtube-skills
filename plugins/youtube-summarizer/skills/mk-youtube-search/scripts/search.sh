@@ -75,5 +75,5 @@ echo "$RESULT" | "$JQ" -c '.[]' | while read -r line; do
     write_or_merge_meta "$META_DIR/$BASENAME.meta.json" "$META_JSON" "true"
 done
 
-# Output the result
-echo "$RESULT"
+# Output the result wrapped in status object (consistent with other skills)
+"$JQ" -n --argjson videos "$RESULT" '{status: "success", videos: $videos}'

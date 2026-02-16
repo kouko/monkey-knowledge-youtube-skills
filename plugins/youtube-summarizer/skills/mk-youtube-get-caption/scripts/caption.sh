@@ -171,6 +171,8 @@ fi
 # First try to download manual (author-uploaded) subtitles
 # Download to temp location first, then rename
 TEMP_DIR=$(mktemp -d)
+cleanup() { rm -rf "$TEMP_DIR"; }
+trap cleanup EXIT
 "$YT_DLP" --write-subs \
           --sub-lang "$LANG" \
           --skip-download --convert-subs srt \
@@ -201,9 +203,6 @@ if [ -n "$TEMP_SRT" ] && [ -f "$TEMP_SRT" ]; then
     # Generate plain text version (remove sequence numbers, timestamps, empty lines)
     TEXT_FILE="${SRT_FILE%.srt}.txt"
     LC_ALL=en_US.UTF-8 sed '/^[0-9]*$/d; /-->/d; /^[[:space:]]*$/d' "$SRT_FILE" | uniq > "$TEXT_FILE"
-
-    # Clean up temp directory
-    rm -rf "$TEMP_DIR"
 
     # Get SRT file statistics
     CHAR_COUNT=$(wc -c < "$SRT_FILE" | tr -d ' ')
@@ -252,9 +251,6 @@ if [ -n "$TEMP_SRT" ] && [ -f "$TEMP_SRT" ]; then
             url: $url
         }'
 else
-    # Clean up temp directory
-    rm -rf "$TEMP_DIR"
-
     "$JQ" -n \
         --arg status "error" \
         --arg message "No subtitles found (this video may not have subtitles)" \

@@ -131,6 +131,8 @@ fi
 
 # Create temp directory for download
 TEMP_DIR=$(mktemp -d)
+cleanup() { rm -rf "$TEMP_DIR"; }
+trap cleanup EXIT
 
 # Get Chrome profiles directory based on OS
 get_chrome_dir() {
@@ -180,16 +182,16 @@ try_browser_cookies() {
 # Download audio with optional cookie authentication
 download_audio() {
     local use_cookies="$1"
-    local cookie_args=""
+    local cookie_args=()
 
     if [ "$use_cookies" = "true" ] && [ -n "$BROWSER" ]; then
-        cookie_args="--cookies-from-browser $BROWSER"
+        cookie_args=(--cookies-from-browser "$BROWSER")
     elif [ "$use_cookies" = "true" ]; then
         # Auto-detect available browser (Chrome tries all profiles)
         for browser in chrome firefox safari edge brave; do
             local found_browser
             if found_browser=$(try_browser_cookies "$browser"); then
-                cookie_args="--cookies-from-browser $found_browser"
+                cookie_args=(--cookies-from-browser "$found_browser")
                 echo "[INFO] Using cookies from: $found_browser" >&2
                 break
             fi
@@ -197,8 +199,7 @@ download_audio() {
     fi
 
     # Download to temp directory first, then rename
-    # shellcheck disable=SC2086
-    "$YT_DLP" -x -o "$TEMP_DIR/%(id)s.%(ext)s" $cookie_args "$URL" 2>&1
+    "$YT_DLP" -x -o "$TEMP_DIR/%(id)s.%(ext)s" "${cookie_args[@]}" "$URL" 2>&1
 }
 
 # First attempt: without authentication
@@ -207,14 +208,17 @@ if ! download_audio "false" >&2; then
 
     # Second attempt: with browser cookies
     if ! download_audio "true" >&2; then
-        rm -rf "$TEMP_DIR"
         "$JQ" -n '{status: "error", message: "Download failed (tried with and without cookies)"}'
         exit 1
     fi
 fi
 
 # Find the downloaded file in temp directory (any audio format)
-TEMP_FILE=$(ls -t "$TEMP_DIR"/*.{m4a,webm,opus,ogg,mp3,aac,wav} 2>/dev/null | head -1)
+TEMP_FILE=""
+for ext in m4a webm opus ogg mp3 aac wav; do
+    TEMP_FILE=$(ls -t "$TEMP_DIR"/*."$ext" 2>/dev/null | head -1)
+    [ -n "$TEMP_FILE" ] && break
+done
 
 if [ -n "$TEMP_FILE" ] && [ -f "$TEMP_FILE" ]; then
     # Get the extension from the downloaded file
@@ -223,9 +227,6 @@ if [ -n "$TEMP_FILE" ] && [ -f "$TEMP_FILE" ]; then
     # Rename to unified format: {id}__{title}.{ext}
     AUDIO_FILE="$OUTPUT_DIR/${BASENAME}.${EXT}"
     mv "$TEMP_FILE" "$AUDIO_FILE"
-
-    # Clean up temp directory
-    rm -rf "$TEMP_DIR"
 
     # Extract metadata fields for output
     META_VIDEO_ID=$(echo "$EXISTING_META" | "$JQ" -r '.video_id // empty')
@@ -256,7 +257,6 @@ if [ -n "$TEMP_FILE" ] && [ -f "$TEMP_FILE" ]; then
             duration_string: $duration_string
         }'
 else
-    rm -rf "$TEMP_DIR"
     "$JQ" -n '{status: "error", message: "Download completed but file not found"}'
     exit 1
 fi

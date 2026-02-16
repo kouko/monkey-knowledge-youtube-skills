@@ -5,8 +5,8 @@
 get_base_tmp() {
     case "$(uname -s)" in
         Darwin|Linux)
-            # macOS/Linux: use fixed /tmp path
-            echo "/tmp"
+            # macOS/Linux: respect TMPDIR environment variable
+            echo "${TMPDIR:-/tmp}"
             ;;
         MINGW*|MSYS*|CYGWIN*)
             # Windows: use Windows temp directory
@@ -132,6 +132,6 @@ find_file_by_id() {
     local video_id="$2"
     local pattern="${3:-*}"
     # 格式: YYYYMMDD__VIDEO_ID__TITLE.PATTERN
-    # shellcheck disable=SC2086
-    ls "$dir/"*"__${video_id}__"*${pattern} 2>/dev/null | head -1
+    # Use find for safer pattern matching (avoids unquoted glob expansion)
+    find "$dir" -maxdepth 1 -name "*__${video_id}__${pattern}" 2>/dev/null | head -1
 }

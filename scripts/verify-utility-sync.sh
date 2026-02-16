@@ -28,7 +28,7 @@ echo ""
 
 EXIT_CODE=0
 
-for name in naming ensure_jq download_jq ensure_ytdlp download_ytdlp; do
+for name in naming ensure_jq download_jq ensure_ytdlp download_ytdlp build_ytdlp; do
     files=$(find "$SKILLS_DIR" -name "_utility__${name}.sh" 2>/dev/null | sort)
 
     if [ -z "$files" ]; then
