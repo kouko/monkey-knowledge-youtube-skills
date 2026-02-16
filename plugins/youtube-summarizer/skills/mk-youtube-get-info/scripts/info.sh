@@ -7,14 +7,93 @@ source "$(dirname "$0")/_utility__ensure_jq.sh"
 source "$(dirname "$0")/_utility__naming.sh"
 
 URL="$1"
+BROWSER="${2:-}"  # Optional: specify browser (chrome, firefox, safari, etc.)
 
 if [ -z "$URL" ]; then
-    echo "Usage: info.sh <url>"
+    "$JQ" -n '{status: "error", message: "Usage: info.sh <url> [browser]"}'
     exit 1
 fi
 
-# Get raw metadata from yt-dlp
-RAW_META=$("$YT_DLP" -j --no-download "$URL" 2>/dev/null)
+# Get Chrome profiles directory based on OS
+get_chrome_dir() {
+    case "$(uname)" in
+        Darwin) echo "$HOME/Library/Application Support/Google/Chrome" ;;
+        Linux)  echo "$HOME/.config/google-chrome" ;;
+        *)      echo "" ;;  # Windows needs different handling
+    esac
+}
+
+# Try browser cookies and return the working browser string
+try_browser_cookies() {
+    local browser="$1"
+
+    # For Chrome without specific profile, try all profiles
+    if [[ "$browser" == "chrome" ]]; then
+        local chrome_dir
+        chrome_dir=$(get_chrome_dir)
+        if [ -d "$chrome_dir" ]; then
+            # Try Default profile first
+            if "$YT_DLP" --cookies-from-browser "chrome:Default" --simulate "$URL" >/dev/null 2>&1; then
+                echo "chrome:Default"
+                return 0
+            fi
+            # Try other profiles
+            for profile_dir in "$chrome_dir"/Profile*/; do
+                if [ -d "$profile_dir" ]; then
+                    local profile_name
+                    profile_name=$(basename "$profile_dir")
+                    if "$YT_DLP" --cookies-from-browser "chrome:$profile_name" --simulate "$URL" >/dev/null 2>&1; then
+                        echo "chrome:$profile_name"
+                        return 0
+                    fi
+                fi
+            done
+        fi
+    fi
+
+    # Non-Chrome or all Chrome profiles failed
+    if "$YT_DLP" --cookies-from-browser "$browser" --simulate "$URL" >/dev/null 2>&1; then
+        echo "$browser"
+        return 0
+    fi
+    return 1
+}
+
+# Fetch info with optional cookie authentication
+fetch_info() {
+    local use_cookies="$1"
+    local cookie_args=()
+
+    if [ "$use_cookies" = "true" ] && [ -n "$BROWSER" ]; then
+        cookie_args=(--cookies-from-browser "$BROWSER")
+    elif [ "$use_cookies" = "true" ]; then
+        # Auto-detect available browser (Chrome tries all profiles)
+        for browser in chrome firefox safari edge brave; do
+            local found_browser
+            if found_browser=$(try_browser_cookies "$browser"); then
+                cookie_args=(--cookies-from-browser "$found_browser")
+                echo "[INFO] Using cookies from: $found_browser" >&2
+                break
+            fi
+        done
+    fi
+
+    "$YT_DLP" -j --no-download "${cookie_args[@]}" "$URL" 2>/dev/null
+}
+
+# First attempt: without authentication
+RAW_META=$(fetch_info "false") || RAW_META=""
+
+if [ -z "$RAW_META" ]; then
+    echo "[INFO] First attempt failed, retrying with browser cookies..." >&2
+    # Second attempt: with browser cookies
+    RAW_META=$(fetch_info "true") || RAW_META=""
+
+    if [ -z "$RAW_META" ]; then
+        "$JQ" -n '{status: "error", message: "Failed to fetch video info (tried with and without cookies)"}'
+        exit 1
+    fi
+fi
 
 # Extract video ID, title, and upload_date for basename
 VIDEO_ID=$(echo "$RAW_META" | "$JQ" -r '.id')

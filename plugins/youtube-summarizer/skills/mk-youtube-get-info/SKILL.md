@@ -20,13 +20,17 @@ Get video details and generate content summary.
 ## Quick Start
 
 ```
-/mk-youtube-get-info <URL>
+/mk-youtube-get-info <URL> [browser]
 ```
 
 ## Examples
 
-```
+```bash
+# Basic usage (auto-detects cookies if needed)
 /mk-youtube-get-info https://www.youtube.com/watch?v=dQw4w9WgXcQ
+
+# Specify browser for cookie authentication
+/mk-youtube-get-info https://www.youtube.com/watch?v=dQw4w9WgXcQ chrome
 ```
 
 ## How it Works
@@ -90,6 +94,8 @@ This skill automatically saves video metadata to `/tmp/monkey_knowledge/youtube/
 ## Notes
 
 - Uses system yt-dlp/jq if available, otherwise auto-downloads on first run
+- **Cookie Fallback**: If initial request fails, automatically retries with browser cookies (auto-detects Chrome, Firefox, Safari, Edge, Brave)
+- **Browser Parameter**: Optionally specify `chrome`, `firefox`, `safari`, `edge`, or `brave` to use specific browser cookies
 
 ## Next Step
 
