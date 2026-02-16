@@ -79,6 +79,23 @@ _try_pkg_install() {
     return 1
 }
 
+# --- Platform Detection ---
+
+get_ffmpeg_binary_name() {
+    local os arch
+    os="$(uname -s | tr '[:upper:]' '[:lower:]')"
+    arch="$(uname -m)"
+
+    # Normalize arch names
+    case "$arch" in
+        x86_64)        arch="amd64" ;;
+        arm64|aarch64) arch="arm64" ;;
+        *)             echo ""; return 1 ;;
+    esac
+
+    echo "ffmpeg-${os}-${arch}"
+}
+
 # --- Main Logic ---
 
 find_ffmpeg() {
@@ -98,11 +115,14 @@ find_ffmpeg() {
         fi
     fi
 
-    # 3. Check pre-built binary in bin/
-    local binary_path="$BIN_DIR/ffmpeg"
-    if [ -x "$binary_path" ]; then
-        echo "$binary_path"
-        return 0
+    # 3. Check pre-built binary in bin/ (with platform suffix)
+    local binary_name="$(get_ffmpeg_binary_name)"
+    if [ -n "$binary_name" ]; then
+        local binary_path="$BIN_DIR/$binary_name"
+        if [ -x "$binary_path" ]; then
+            echo "$binary_path"
+            return 0
+        fi
     fi
 
     # 4. Not available

@@ -31,6 +31,22 @@ get_base_tmp() {
 MONKEY_KNOWLEDGE_TMP="$(get_base_tmp)/monkey_knowledge"
 BUILD_DIR="$MONKEY_KNOWLEDGE_TMP/build/whisper-cpp-$$"
 
+# Platform suffix for binary naming
+get_platform_suffix() {
+    local os arch
+    os="$(uname -s | tr '[:upper:]' '[:lower:]')"
+    arch="$(uname -m)"
+
+    case "$arch" in
+        x86_64)        arch="amd64" ;;
+        arm64|aarch64) arch="arm64" ;;
+    esac
+
+    echo "${os}-${arch}"
+}
+
+PLATFORM_SUFFIX="$(get_platform_suffix)"
+
 # Only support macOS
 if [ "$(uname -s)" != "Darwin" ]; then
     echo "ERROR: This script is for macOS only" >&2
@@ -72,14 +88,15 @@ build_whisper() {
 
     echo "[INFO] Installing binary..." >&2
     mkdir -p "$BIN_DIR"
-    cp build/bin/whisper-cli "$BIN_DIR/whisper-cli"
-    chmod +x "$BIN_DIR/whisper-cli"
+    local output_name="whisper-cli-${PLATFORM_SUFFIX}"
+    cp build/bin/whisper-cli "$BIN_DIR/$output_name"
+    chmod +x "$BIN_DIR/$output_name"
 
     echo "[INFO] Cleaning up..." >&2
     cd /
     rm -rf "$BUILD_DIR"
 
-    echo "[INFO] whisper-cli installed: $BIN_DIR/whisper-cli" >&2
+    echo "[INFO] whisper-cli installed: $BIN_DIR/$output_name" >&2
     echo "[INFO] Build options: Metal=ON, Static=ON" >&2
 }
 
@@ -87,4 +104,4 @@ check_prerequisites
 build_whisper
 
 echo "[SUCCESS] Build complete!" >&2
-"$BIN_DIR/whisper-cli" --version 2>&1 || true
+"$BIN_DIR/whisper-cli-${PLATFORM_SUFFIX}" --version 2>&1 || true
