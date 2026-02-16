@@ -272,11 +272,11 @@ CPU_CORES=$(sysctl -n hw.ncpu 2>/dev/null)
 if [ -z "$CPU_CORES" ]; then
     CPU_CORES=$(nproc 2>/dev/null || echo 4)
 fi
-THREADS=${CPU_CORES:-4}
-echo "[INFO] Using $THREADS threads (detected $CPU_CORES cores)" >&2
+THREADS=$(( (CPU_CORES + 1) / 2 ))  # 使用一半核心數
+echo "[INFO] Using $THREADS threads (half of $CPU_CORES cores)" >&2
 
 # Build whisper command
-WHISPER_ARGS=("-f" "$WAV_FILE" "-m" "$MODEL_PATH" "-oj" "-t" "$THREADS")
+WHISPER_ARGS=("-f" "$WAV_FILE" "-m" "$MODEL_PATH" "-oj" "-t" "$THREADS" "--print-progress" "--beam-size" "2" "--max-context" "512")
 
 # Add language option (auto = don't specify, let whisper detect)
 if [ "$LANGUAGE" != "auto" ]; then
@@ -286,7 +286,7 @@ fi
 # Run whisper
 echo "[INFO] Transcribing with model: $MODEL..." >&2
 OUTPUT_FILE="$TEMP_DIR/output"
-"$WHISPER" "${WHISPER_ARGS[@]}" -of "$OUTPUT_FILE" >/dev/null 2>&1
+"$WHISPER" "${WHISPER_ARGS[@]}" -of "$OUTPUT_FILE" >/dev/null
 
 # Check if output exists
 JSON_FILE="$OUTPUT_FILE.json"
