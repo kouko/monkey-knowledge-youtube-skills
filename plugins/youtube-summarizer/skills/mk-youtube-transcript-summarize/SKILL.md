@@ -25,8 +25,8 @@ Generate a structured, high-quality summary of a YouTube video from its transcri
 
 ## Examples
 
-- `/mk-youtube-transcript-summarize /tmp/youtube-captions/dQw4w9WgXcQ__Video_Title.en.txt`
-- `/mk-youtube-transcript-summarize /tmp/youtube-audio-transcribe/dQw4w9WgXcQ__Video_Title.txt`
+- `/mk-youtube-transcript-summarize /tmp/youtube-captions/20091025__dQw4w9WgXcQ__Video_Title.en.txt`
+- `/mk-youtube-transcript-summarize /tmp/youtube-audio-transcribe/20091025__dQw4w9WgXcQ__Video_Title.txt`
 
 **Typical workflow:**
 
@@ -34,8 +34,8 @@ Generate a structured, high-quality summary of a YouTube video from its transcri
 /mk-youtube-get-caption https://youtube.com/watch?v=xxx
 → outputs transcript file path
 
-/mk-youtube-transcript-summarize /tmp/youtube-captions/VIDEO_ID__Title.en.txt
-→ generates structured summary saved to /tmp/youtube-summaries/VIDEO_ID__Title.en.md
+/mk-youtube-transcript-summarize /tmp/youtube-captions/20091025__VIDEO_ID__Title.en.txt
+→ generates structured summary saved to /tmp/youtube-summaries/20091025__VIDEO_ID__Title.en.md
 ```
 
 ## How it Works
@@ -184,13 +184,13 @@ After generating the summary, save it using the Write tool:
 - **Filename**: `<transcript_basename>.md` (preserves unified naming format)
 
 **Example:**
-- Input: `/tmp/youtube-captions/dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.en.txt`
-- Output: `/tmp/youtube-summaries/dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.en.md`
+- Input: `/tmp/youtube-captions/20091025__dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.en.txt`
+- Output: `/tmp/youtube-summaries/20091025__dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.en.md`
 
 End your response with the file path:
 ```
 ---
-📄 Summary saved to: `/tmp/youtube-summaries/dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.en.md`
+📄 Summary saved to: `/tmp/youtube-summaries/20091025__dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.en.md`
 ```
 
 ## Output Format
@@ -199,8 +199,8 @@ Script JSON output:
 ```json
 {
   "status": "success",
-  "source_transcript": "/tmp/youtube-captions/VIDEO_ID__Video_Title.en.txt",
-  "output_summary": "/tmp/youtube-summaries/VIDEO_ID__Video_Title.en.md",
+  "source_transcript": "/tmp/youtube-captions/20091025__VIDEO_ID__Video_Title.en.txt",
+  "output_summary": "/tmp/youtube-summaries/20091025__VIDEO_ID__Video_Title.en.md",
   "char_count": 30000,
   "line_count": 450,
   "strategy": "standard",

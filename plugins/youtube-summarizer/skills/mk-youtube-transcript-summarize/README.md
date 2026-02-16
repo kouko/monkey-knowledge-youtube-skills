@@ -46,8 +46,8 @@ mk-youtube-transcript-summarize/
 ```json
 {
   "status": "success",
-  "source_transcript": "/tmp/youtube-captions/VIDEO_ID__Title.en.txt",
-  "output_summary": "/tmp/youtube-summaries/VIDEO_ID__Title.en.md",
+  "source_transcript": "/tmp/youtube-captions/20091025__VIDEO_ID__Title.en.txt",
+  "output_summary": "/tmp/youtube-summaries/20091025__VIDEO_ID__Title.en.md",
   "char_count": 30000,
   "line_count": 450,
   "strategy": "standard",
@@ -77,19 +77,19 @@ mk-youtube-transcript-summarize/
 
 ```bash
 # Validate a transcript file
-./scripts/summary.sh "/tmp/youtube-captions/dQw4w9WgXcQ__Video_Title.en.txt"
+./scripts/summary.sh "/tmp/youtube-captions/20091025__dQw4w9WgXcQ__Video_Title.en.txt"
 
 # Typical workflow in Claude Code
 # Step 1: Download transcript
 /mk-youtube-get-caption https://www.youtube.com/watch?v=xxx
 # Step 2: Summarize from the downloaded file
-/mk-youtube-transcript-summarize /tmp/youtube-captions/VIDEO_ID__Title.en.txt
+/mk-youtube-transcript-summarize /tmp/youtube-captions/20091025__VIDEO_ID__Title.en.txt
 ```
 
 ## How It Works
 
 ```
-  /mk-youtube-transcript-summarize /tmp/youtube-captions/VIDEO_ID__Title.en.txt
+  /mk-youtube-transcript-summarize /tmp/youtube-captions/20091025__VIDEO_ID__Title.en.txt
            │
            ▼
   ┌───────────────────┐

@@ -75,7 +75,7 @@ Success:
 ```json
 {
   "status": "success",
-  "file_path": "/tmp/youtube-audio/VIDEO_ID__Video_Title.m4a",
+  "file_path": "/tmp/youtube-audio/20091025__VIDEO_ID__Video_Title.m4a",
   "file_size": "5.2M",
   "video_id": "dQw4w9WgXcQ",
   "title": "Video Title",
@@ -95,9 +95,9 @@ Error:
 
 ## Filename Format
 
-Files use unified naming: `{video_id}__{sanitized_title}.{ext}`
+Files use unified naming with date prefix: `{YYYYMMDD}__{video_id}__{sanitized_title}.{ext}`
 
-Example: `dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.m4a`
+Example: `20091025__dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.m4a`
 
 ## Browser Cookie Fallback
 

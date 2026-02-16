@@ -54,8 +54,8 @@ Success:
 ```json
 {
   "status": "success",
-  "file_path": "/tmp/youtube-captions/VIDEO_ID__Video_Title.en.srt",
-  "text_file_path": "/tmp/youtube-captions/VIDEO_ID__Video_Title.en.txt",
+  "file_path": "/tmp/youtube-captions/20091025__VIDEO_ID__Video_Title.en.srt",
+  "text_file_path": "/tmp/youtube-captions/20091025__VIDEO_ID__Video_Title.en.txt",
   "language": "en",
   "subtitle_type": "manual",
   "char_count": 30287,
@@ -96,9 +96,9 @@ Error:
 
 ## Filename Format
 
-Files use unified naming: `{video_id}__{sanitized_title}.{lang}.{ext}`
+Files use unified naming with date prefix: `{YYYYMMDD}__{video_id}__{sanitized_title}.{lang}.{ext}`
 
-Example: `dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.en.srt`
+Example: `20091025__dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.en.srt`
 
 ## Notes
 

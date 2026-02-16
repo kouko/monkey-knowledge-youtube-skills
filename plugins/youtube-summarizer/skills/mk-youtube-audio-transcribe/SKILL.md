@@ -88,8 +88,8 @@ Transcribe audio files to text using local whisper.cpp (no cloud API required).
 ```json
 {
   "status": "success",
-  "file_path": "/tmp/youtube-audio-transcribe/VIDEO_ID__Video_Title.json",
-  "text_file_path": "/tmp/youtube-audio-transcribe/VIDEO_ID__Video_Title.txt",
+  "file_path": "/tmp/youtube-audio-transcribe/20091025__VIDEO_ID__Video_Title.json",
+  "text_file_path": "/tmp/youtube-audio-transcribe/20091025__VIDEO_ID__Video_Title.txt",
   "language": "en",
   "duration": "3:32",
   "model": "medium",
@@ -178,9 +178,9 @@ When you receive `MODEL_CORRUPTED` error:
 
 ## Filename Format
 
-Output files preserve the input audio filename's unified naming format: `{video_id}__{sanitized_title}.{ext}`
+Output files preserve the input audio filename's unified naming format with date prefix: `{YYYYMMDD}__{video_id}__{sanitized_title}.{ext}`
 
-Example: `dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.json`
+Example: `20091025__dQw4w9WgXcQ__Rick_Astley_Never_Gonna_Give_You_Up.json`
 
 ## JSON File Format
 

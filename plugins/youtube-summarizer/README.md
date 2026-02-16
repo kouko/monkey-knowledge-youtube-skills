@@ -176,7 +176,8 @@ The date prefix `{YYYYMMDD}` is the video's upload date, enabling chronological 
 ### Title Sanitization Rules
 
 - Replace newlines/carriage returns with spaces
-- Remove filesystem-unsafe characters: `/:*?"<>|\`
+- Remove ASCII filesystem-unsafe characters: `/:*?"<>|\`
+- Remove Unicode punctuation: `""''！？｜：` (Chinese quotes, fullwidth symbols)
 - Replace consecutive spaces with single underscore
 - Remove leading/trailing underscores
 - Truncate to 80 characters maximum
