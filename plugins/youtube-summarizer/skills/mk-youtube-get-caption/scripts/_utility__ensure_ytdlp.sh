@@ -81,7 +81,32 @@ _try_pkg_install() {
 
 # --- Platform Detection ---
 
-# Detect platform for binary name
+# Get platform-specific binary name (local build)
+get_ytdlp_platform_binary_name() {
+    local os arch
+    os="$(uname -s)"
+    arch="$(uname -m)"
+
+    # Normalize OS names
+    case "$os" in
+        Darwin)               os="darwin" ;;
+        Linux)                os="linux" ;;
+        MINGW*|CYGWIN*|MSYS*) os="windows" ;;
+        *)                    echo ""; return 1 ;;
+    esac
+
+    # Normalize arch names
+    case "$arch" in
+        x86_64)        arch="amd64" ;;
+        arm64|aarch64) arch="arm64" ;;
+        i686|i386)     arch="386" ;;
+        *)             echo ""; return 1 ;;
+    esac
+
+    echo "yt-dlp-${os}-${arch}"
+}
+
+# Get universal binary name (official release)
 get_ytdlp_binary_name() {
     local os
     os="$(uname -s)"
@@ -119,10 +144,17 @@ find_ytdlp() {
         fi
     fi
 
-    # 3. Check bin/ directory
-    local binary_name binary_path
-    binary_name=$(get_ytdlp_binary_name)
+    # 3. Check bin/ directory - platform-specific binary first (smaller)
+    local platform_binary_name
+    platform_binary_name=$(get_ytdlp_platform_binary_name)
+    if [ -n "$platform_binary_name" ] && [ -x "$BIN_DIR/$platform_binary_name" ]; then
+        echo "$BIN_DIR/$platform_binary_name"
+        return 0
+    fi
 
+    # 4. Check bin/ directory - universal binary (official release)
+    local binary_name
+    binary_name=$(get_ytdlp_binary_name)
     if [ -n "$binary_name" ] && [ -x "$BIN_DIR/$binary_name" ]; then
         echo "$BIN_DIR/$binary_name"
         return 0
@@ -141,7 +173,9 @@ else
 {
     "error_code": "YTDLP_NOT_FOUND",
     "message": "yt-dlp not found. Please install it first.",
-    "download_command": "$SCRIPT_DIR/_utility__download_ytdlp.sh"
+    "install_command": "brew install yt-dlp",
+    "download_command": "$SCRIPT_DIR/_utility__download_ytdlp.sh",
+    "build_command": "$SCRIPT_DIR/_utility__build_ytdlp.sh"
 }
 EOF
 )
