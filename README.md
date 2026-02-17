@@ -1,15 +1,40 @@
 # Monkey Knowledge Skills
 
-A Claude Code plugin marketplace for productivity skills.
+A plugin marketplace for AI coding assistants. Follows the [Agent Skills](https://agentskills.io/) open standard for cross-platform compatibility.
+
+## Platform Compatibility
+
+| Platform | Support | Installation |
+|----------|---------|--------------|
+| Claude Code | ✅ | `/plugin marketplace add` |
+| Gemini CLI | ✅ | `gemini extensions install` |
+| OpenCode | ✅ | Native Agent Skills |
+| VS Code Copilot | ✅ | Native Agent Skills |
 
 ## Installation
 
+### Claude Code
+
 ```bash
-# Add marketplace
+# 1. Add marketplace
 /plugin marketplace add kouko/monkey-knowledge-skills
 
-# Install plugin
-/plugin install youtube-summarizer@monkey-marketplace
+# 2. Install plugin
+/plugin install youtube-summarizer@kouko-monkey-knowledge-skills
+```
+
+### Gemini CLI
+
+```bash
+gemini extensions install https://github.com/kouko/monkey-knowledge-skills
+```
+
+### OpenCode
+
+```bash
+curl -L https://github.com/kouko/monkey-knowledge-skills/archive/refs/heads/main.tar.gz | \
+  tar -xz --strip-components=3 -C ~/.config/opencode/skills/ \
+  "monkey-knowledge-skills-main/plugins/youtube-summarizer/skills/"
 ```
 
 ## Available Plugins
@@ -58,12 +83,13 @@ claude plugin validate .
 ```
 monkey-knowledge-skills/
 ├── .claude-plugin/
-│   └── marketplace.json
+│   └── marketplace.json        # Claude Code marketplace
 ├── plugins/
 │   └── youtube-summarizer/
 │       ├── .claude-plugin/
-│       │   └── plugin.json
-│       └── skills/
+│       │   └── plugin.json     # Claude Code manifest
+│       ├── gemini-extension.json  # Gemini CLI manifest
+│       └── skills/             # Agent Skills (cross-platform)
 │           ├── mk-youtube-search/
 │           ├── mk-youtube-get-info/
 │           ├── mk-youtube-get-caption/
