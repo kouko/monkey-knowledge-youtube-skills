@@ -31,7 +31,8 @@ Claude Code plugin for YouTube video tools - search, info, transcript, audio dow
 ```
 plugins/youtube-summarizer/
 ├── .claude-plugin/
-│   └── plugin.json
+│   └── plugin.json          # Claude Code manifest
+├── gemini-extension.json    # Gemini CLI manifest
 ├── skills/
 │   ├── mk-youtube-search/
 │   ├── mk-youtube-get-info/
@@ -43,6 +44,17 @@ plugins/youtube-summarizer/
 │   └── mk-youtube-summarize/
 └── README.md
 ```
+
+## Platform Compatibility
+
+This plugin follows the [Agent Skills](https://agentskills.io/) open standard, enabling cross-platform compatibility:
+
+| Platform | Support | Manifest |
+|----------|---------|----------|
+| Claude Code | ✅ | `.claude-plugin/plugin.json` |
+| Gemini CLI | ✅ | `gemini-extension.json` |
+| OpenCode | ✅ | Native Agent Skills support |
+| VS Code Copilot | ✅ | Native Agent Skills support |
 
 ## Requirements
 
@@ -324,12 +336,30 @@ All skills include video metadata in their JSON output when available.
 
 ## Installation
 
+### Claude Code
+
 ```bash
 # Add marketplace
 /plugin marketplace add kouko/monkey-knowledge-skills
 
 # Install plugin
 /plugin install youtube-summarizer@monkey-marketplace
+```
+
+### Gemini CLI
+
+```bash
+gemini extensions install https://github.com/kouko/monkey-knowledge-skills/tree/main/plugins/youtube-summarizer
+```
+
+### OpenCode
+
+```bash
+# Copy skills to OpenCode directory
+cp -r skills/mk-youtube-* ~/.config/opencode/skills/
+
+# Or use Claude-compatible path (OpenCode also reads this)
+cp -r skills/mk-youtube-* ~/.claude/skills/
 ```
 
 ## Examples
