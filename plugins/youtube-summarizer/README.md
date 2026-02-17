@@ -355,16 +355,9 @@ gemini extensions install https://github.com/kouko/monkey-knowledge-skills/tree/
 ### OpenCode
 
 ```bash
-# Using curl (no extra tools needed)
 curl -sL https://github.com/kouko/monkey-knowledge-skills/archive/refs/heads/main.tar.gz | \
   tar -xz --strip-components=3 -C ~/.config/opencode/skills/ \
   "monkey-knowledge-skills-main/plugins/youtube-summarizer/skills/"
-
-# Or using degit (if npm available)
-npx degit kouko/monkey-knowledge-skills/plugins/youtube-summarizer/skills ~/.config/opencode/skills
-
-# Or if you cloned the repo locally
-cp -r skills/mk-youtube-* ~/.config/opencode/skills/
 ```
 
 ## Examples
