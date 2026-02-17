@@ -9,5 +9,5 @@
   "homepage": "https://github.com/kouko/monkey-knowledge-skills",
   "repository": "https://github.com/kouko/monkey-knowledge-skills",
   "license": "MIT",
-  "keywords": ["youtube", "video", "summarize", "transcript"]
+  "keywords": ["youtube", "video", "summarize", "caption"]
 }

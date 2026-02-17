@@ -20,10 +20,13 @@
 skill-name/
 ├── SKILL.md           # Claude Code 技能定義（YAML frontmatter）
 ├── README.md          # 詳細文檔
-├── bin/               # 自動下載的 binary（初始為空）
-│   └── .gitkeep
+├── bin/               # Platform-specific binaries（自動下載或預編譯）
+│   ├── jq-macos-arm64
+│   ├── yt-dlp-darwin-arm64
+│   └── ...
 └── scripts/
-    ├── _ensure_*.sh   # 依賴管理腳本
+    ├── _ensure_*.sh   # 依賴管理腳本（含自動下載邏輯）
+    ├── _download_*.sh # 下載腳本
     └── main.sh        # 主要邏輯腳本
 ```
 
@@ -86,6 +89,17 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BIN_DIR="$SCRIPT_DIR/../bin"
 
+get_tool_binary_name() {
+    local os arch
+    os="$(uname -s | tr '[:upper:]' '[:lower:]')"
+    arch="$(uname -m)"
+    case "$arch" in
+        x86_64)        arch="amd64" ;;
+        arm64|aarch64) arch="arm64" ;;
+    esac
+    echo "tool-${os}-${arch}"
+}
+
 get_tool() {
     # 1. 優先使用系統版本
     if command -v tool &> /dev/null; then
@@ -93,13 +107,15 @@ get_tool() {
         return 0
     fi
 
-    # 2. 偵測平台與 CPU 架構
-    # uname -s: Darwin/Linux/MINGW*
-    # uname -m: x86_64/arm64/aarch64
+    # 2. 檢查 bin/ 目錄的 platform-specific binary
+    local binary_name="$(get_tool_binary_name)"
+    if [ -x "$BIN_DIR/$binary_name" ]; then
+        echo "$BIN_DIR/$binary_name"
+        return 0
+    fi
 
-    # 3. 檢查 bin/ 是否已下載
-    # 4. 自動下載對應版本
-    # 5. 設定執行權限
+    # 3. 找不到則報錯
+    return 1
 }
 
 TOOL="$(get_tool)"
@@ -157,8 +173,8 @@ fi
 | 優先順序 | 來源 | 說明 |
 |---------|------|------|
 | 1 | 系統版本 | `command -v tool` |
-| 2 | bin/ 目錄 | 已下載的 binary |
-| 3 | 自動下載 | 從 GitHub Releases 下載 |
+| 2 | bin/ 目錄 | 已存在的 platform-specific binary |
+| 3 | 自動下載/build | 執行 `_download_*.sh` 或 `_build_*.sh` |
 
 ### 平台支援
 
@@ -225,8 +241,8 @@ claude --plugin-dir /path/to/monkey-knowledge-skills/plugins/youtube-summarizer
 
 啟動 Claude Code 後：
 1. 執行 `/skills` 查看可用 skills
-2. 應看到 `youtube-search`、`youtube-get-info`、`youtube-get-transcript`、`youtube-get-audio`、`youtube-get-channel-latest`、`transcript-summary`
-3. 使用 `/youtube-search <query>` 測試功能
+2. 應看到 `mk-youtube-search`、`mk-youtube-get-info`、`mk-youtube-get-caption`、`mk-youtube-get-audio`、`mk-youtube-get-channel-latest`、`mk-youtube-audio-transcribe`、`mk-youtube-transcript-summarize`、`mk-youtube-summarize`
+3. 使用 `/mk-youtube-search <query>` 測試功能
 
 ### 開發流程
 
@@ -238,6 +254,257 @@ claude --plugin-dir /path/to/monkey-knowledge-skills/plugins/youtube-summarizer
 ## 範例 Plugin
 
 參考 `plugins/youtube-summarizer/` 的實作：
-- 6 個獨立 skills（search、get-info、get-transcript、get-audio、get-channel-latest、transcript-summary）
-- 智能依賴管理（yt-dlp、jq 自動下載）
+- 8 個獨立 skills（search、get-info、get-caption、get-audio、get-channel-latest、audio-transcribe、transcript-summarize、summarize）
+- 智能依賴管理（系統優先，自動下載/build 作為 fallback）
 - 統一 JSON 輸出格式
+- 集中式 Metadata 儲存
+- 統一檔案命名規範
+
+---
+
+## YouTube Summarizer 架構規範
+
+以下規範適用於 `plugins/youtube-summarizer/` 內的所有 skills。
+
+### 集中式 Metadata 儲存
+
+所有 YouTube 影片的 metadata 統一儲存於 `$TMPDIR/monkey_knowledge/youtube/meta/`，供各 skill 共享存取。
+
+#### 可攜式暫存路徑
+
+暫存目錄使用可攜式偵測，優先順序：
+1. `$TMPDIR`（macOS/Unix 標準）
+2. `$TEMP`（Windows 標準）
+3. `$TMP`（Windows 備用）
+4. `/tmp`（Unix 預設回退）
+
+#### 目錄結構
+
+```
+/tmp/monkey_knowledge/
+├── youtube/
+│   ├── meta/                    # 集中式 metadata 儲存
+│   │   └── {YYYYMMDD}__{video_id}.meta.json
+│   ├── captions/                # 字幕檔案
+│   │   └── {YYYYMMDD}__{video_id}.{lang}.{srt|txt}
+│   ├── audio/                   # 音訊檔案
+│   │   └── {YYYYMMDD}__{video_id}.{ext}
+│   ├── transcribe/              # 轉錄結果
+│   │   └── {YYYYMMDD}__{video_id}.{json|txt}
+│   └── summaries/               # 摘要檔案
+│       └── {YYYYMMDD}__{video_id}.{lang}.md
+└── build/                       # 建置過程暫存
+    ├── whisper-cpp-$$/
+    ├── whisper-transcribe-$$/
+    └── ffmpeg-download-$$/
+```
+
+#### Metadata JSON 格式
+
+`/tmp/monkey_knowledge/youtube/meta/{YYYYMMDD}__{video_id}.meta.json`：
+
+```json
+{
+  "video_id": "dQw4w9WgXcQ",
+  "title": "Rick Astley - Never Gonna Give You Up",
+  "channel": "Rick Astley",
+  "channel_url": "https://www.youtube.com/channel/UCuAXFkgsw1L7xaCfnd5JJOw",
+  "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+  "upload_date": "20091025",
+  "duration_string": "3:33",
+  "view_count": 1500000000,
+  "description": "...(前 500 字元)",
+  "language": "en",
+  "has_subtitles": true,
+  "subtitle_languages": ["en", "ja", "zh-TW"],
+  "has_auto_captions": true,
+  "auto_caption_count": 15,
+  "source": "get-info",
+  "partial": false,
+  "fetched_at": "2024-01-15T10:30:00Z"
+}
+```
+
+#### 資料完整度管理
+
+| 欄位 | 說明 |
+|------|------|
+| `source` | 資料來源 skill：`get-info`、`channel-latest`、`caption`、`audio` |
+| `partial` | `true` = 部分資料，`false` = 完整資料 |
+
+#### 合併策略
+
+| 場景 | 處理方式 |
+|------|---------|
+| `channel-latest` → `get-info` | `channel-latest` 寫入 partial，`get-info` 更新為 complete |
+| `get-info` → `channel-latest` | `get-info` 已完整，`channel-latest` 不覆蓋 |
+| `caption`/`audio` 自行提取 | 檔案不存在時建立，存在時只讀取 |
+
+### 統一檔案命名規範
+
+#### 命名格式
+
+```
+{YYYYMMDD}__{video_id}.{content_type}.{extension}
+```
+
+日期前綴 `{YYYYMMDD}` 為影片上傳日期，使檔案自然排序。
+檔名不包含標題，避免特殊字元造成路徑問題。標題資訊儲存於 metadata JSON。
+
+#### 命名範例
+
+| 檔案類型 | 命名範例 |
+|---------|---------|
+| Metadata | `20091025__dQw4w9WgXcQ.meta.json` |
+| 字幕 (SRT) | `20091025__dQw4w9WgXcQ.en.srt` |
+| 字幕 (TXT) | `20091025__dQw4w9WgXcQ.en.txt` |
+| 音訊 | `20091025__dQw4w9WgXcQ.m4a` |
+| 轉錄 (JSON) | `20091025__dQw4w9WgXcQ.json` |
+| 轉錄 (TXT) | `20091025__dQw4w9WgXcQ.txt` |
+| 摘要 | `20091025__dQw4w9WgXcQ.en.md` |
+
+#### 長度限制
+
+| 組成 | 長度 |
+|------|------|
+| 日期前綴 | 8 字元（YYYYMMDD） |
+| 分隔符 | 2 字元（`__`） |
+| Video ID | 11 字元（固定） |
+| Content type + ext | 最多 20 字元 |
+| **總計** | ≤ 41 字元 ✅ |
+
+### 共用腳本命名規範（`_utility__` 前綴）
+
+#### 設計原則
+
+為確保各 skill 的獨立性，共用的工具腳本採用**獨立複製模式**：每個 skill 都有自己的複本，而非共享一個檔案。
+
+為識別這些需要保持同步的檔案，使用 `_utility__` 前綴（雙底線分隔）。
+
+#### 命名格式
+
+```
+_utility__{功能名稱}.sh
+```
+
+#### 共用腳本清單
+
+| 腳本名稱 | 用途 | 複本數 |
+|---------|------|--------|
+| `_utility__naming.sh` | 統一命名規則與 metadata 管理 | 7 |
+| `_utility__ensure_jq.sh` | jq 依賴偵測 | 7 |
+| `_utility__download_jq.sh` | jq 下載邏輯 | 7 |
+| `_utility__ensure_ytdlp.sh` | yt-dlp 依賴偵測 | 5 |
+| `_utility__download_ytdlp.sh` | yt-dlp 下載邏輯 | 5 |
+
+#### 維護規則
+
+1. **同步更新**：修改任一 `_utility__` 檔案時，必須同步更新所有複本
+2. **驗證一致性**：提交前執行驗證腳本確認所有複本相同
+3. **使用前綴識別**：依據 `_utility__` 前綴判斷檔案是否為共用腳本
+
+#### 驗證腳本
+
+使用 `scripts/verify-utility-sync.sh` 驗證所有複本一致：
+
+```bash
+./scripts/verify-utility-sync.sh
+
+# 輸出範例
+=== Verifying _utility__ scripts consistency ===
+
+✅ _utility__naming.sh: 7 copies, all identical
+✅ _utility__ensure_jq.sh: 7 copies, all identical
+✅ _utility__download_jq.sh: 7 copies, all identical
+✅ _utility__ensure_ytdlp.sh: 5 copies, all identical
+✅ _utility__download_ytdlp.sh: 5 copies, all identical
+
+All utility scripts are in sync.
+```
+
+---
+
+### 共用函式庫 `_utility__naming.sh`
+
+每個需要使用統一命名或 metadata 的 skill 需在 `scripts/` 目錄下包含 `_utility__naming.sh`。
+
+#### 提供的函式
+
+| 函式 | 用途 |
+|------|------|
+| `make_basename "$UPLOAD_DATE" "$VIDEO_ID"` | 生成統一檔案名稱基底（日期 + Video ID） |
+| `extract_video_id_from_basename "$BASENAME"` | 從 basename 提取 video_id |
+| `write_or_merge_meta "$FILE" "$JSON" "$IS_PARTIAL"` | 寫入或合併 metadata |
+| `find_meta_by_id "$VIDEO_ID"` | 依 video_id 尋找 metadata 檔案 |
+| `find_file_by_id "$DIR" "$VIDEO_ID" "$PATTERN"` | 依 video_id 尋找檔案 |
+| `read_meta "$VIDEO_ID"` | 讀取 metadata JSON |
+
+#### 使用方式
+
+```bash
+source "$(dirname "$0")/_utility__naming.sh"
+
+# 生成檔名（日期 + Video ID）
+BASENAME=$(make_basename "$UPLOAD_DATE" "$VIDEO_ID")
+# 輸出: 20091025__dQw4w9WgXcQ
+
+# 從檔名提取 video_id
+VIDEO_ID=$(extract_video_id_from_basename "$BASENAME")
+# 輸出: dQw4w9WgXcQ
+
+# 讀取 metadata
+EXISTING_META=$(read_meta "$VIDEO_ID")
+
+# 寫入 metadata（partial = true 表示部分資料）
+write_or_merge_meta "$META_DIR/$BASENAME.meta.json" "$META_JSON" "true"
+```
+
+### Skill JSON 輸出規範
+
+所有 skill 的 JSON 輸出應包含 metadata 欄位：
+
+```json
+{
+  "status": "success",
+  "file_path": "/tmp/monkey_knowledge/youtube/audio/20091025__dQw4w9WgXcQ.m4a",
+  "video_id": "dQw4w9WgXcQ",
+  "title": "Video Title",
+  "channel": "Channel Name",
+  "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+}
+```
+
+### 資料流架構
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                 Centralized Metadata Store                       │
+│                 /tmp/monkey_knowledge/youtube/meta/              │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  ┌──────────────┐   ┌────────────────────┐                      │
+│  │ get-info     │──▶│ 寫入完整 metadata   │ (partial: false)     │
+│  └──────────────┘   └────────────────────┘                      │
+│                                                                  │
+│  ┌──────────────────┐   ┌────────────────────┐                  │
+│  │ channel-latest   │──▶│ 批次寫入部分 meta  │ (partial: true)    │
+│  └──────────────────┘   └────────────────────┘                  │
+│                                                                  │
+│  ┌──────────────┐   ┌────────────────────┐                      │
+│  │ get-caption  │──▶│ 讀取或提取 metadata │ → 寫入 partial       │
+│  └──────────────┘   └────────────────────┘                      │
+│                                                                  │
+│  ┌──────────────┐   ┌────────────────────┐                      │
+│  │ get-audio    │──▶│ 讀取或提取 metadata │ → 寫入 partial       │
+│  └──────────────┘   └────────────────────┘                      │
+│                                                                  │
+│  ┌──────────────┐   ┌────────────────────┐                      │
+│  │ transcribe   │──▶│ 從檔名提取 ID       │ → 讀取 metadata      │
+│  └──────────────┘   └────────────────────┘                      │
+│                                                                  │
+│  ┌──────────────┐   ┌────────────────────┐                      │
+│  │ summarize    │──▶│ 從檔名提取 ID       │ → 讀取 metadata      │
+│  └──────────────┘   └────────────────────┘                      │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```

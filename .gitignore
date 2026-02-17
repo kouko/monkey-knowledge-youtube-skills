@@ -1,0 +1,11 @@
+# Whisper models (large files, download separately)
+**/models/*.bin
+
+# Keep .gitkeep files
+!**/.gitkeep
+
+# Platform-specific binaries are tracked in git:
+#   - jq-macos-arm64, jq-linux-amd64, etc.
+#   - yt-dlp-darwin-arm64, yt-dlp-macos, etc.
+#   - ffmpeg-darwin-arm64, etc.
+#   - whisper-cli-darwin-arm64, etc.

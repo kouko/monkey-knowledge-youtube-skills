@@ -16,7 +16,7 @@ A Claude Code plugin marketplace for productivity skills.
 
 | Plugin | Description | Skills |
 |--------|-------------|--------|
-| `youtube-summarizer` | Summarize YouTube videos | `youtube-search`, `youtube-get-info`, `youtube-get-transcript`, `youtube-get-audio`, `youtube-get-channel-latest`, `transcript-summary` |
+| `youtube-summarizer` | Summarize YouTube videos | `mk-youtube-search`, `mk-youtube-get-info`, `mk-youtube-get-caption`, `mk-youtube-get-audio`, `mk-youtube-get-channel-latest`, `mk-youtube-audio-transcribe`, `mk-youtube-transcript-summarize`, `mk-youtube-summarize` |
 
 ## Plugin Details
 
@@ -26,8 +26,7 @@ Summarize YouTube videos from URL or transcript.
 
 **Usage:**
 ```
-/youtube <YouTube URL>
-/youtube <transcript text>
+/mk-youtube-summarize <YouTube URL>
 ```
 
 **Features:**
@@ -45,7 +44,7 @@ Summarize YouTube videos from URL or transcript.
 claude --plugin-dir ./plugins/youtube-summarizer
 
 # 驗證 skills 載入
-/skills  # 應顯示 youtube-search, youtube-get-info, youtube-get-transcript, youtube-get-audio, youtube-get-channel-latest, transcript-summary
+/skills  # 應顯示 mk-youtube-search, mk-youtube-get-info, mk-youtube-get-caption, mk-youtube-get-audio, mk-youtube-get-channel-latest, mk-youtube-audio-transcribe, mk-youtube-transcript-summarize, mk-youtube-summarize
 ```
 
 ### Validate Structure
@@ -65,24 +64,14 @@ monkey-knowledge-skills/
 │       ├── .claude-plugin/
 │       │   └── plugin.json
 │       └── skills/
-│           ├── youtube-search/
-│           │   ├── SKILL.md
-│           │   └── scripts/search.sh
-│           ├── youtube-get-info/
-│           │   ├── SKILL.md
-│           │   └── scripts/info.sh
-│           ├── youtube-get-transcript/
-│           │   ├── SKILL.md
-│           │   └── scripts/transcript.sh
-│           ├── youtube-get-audio/
-│           │   ├── SKILL.md
-│           │   └── scripts/audio.sh
-│           ├── youtube-get-channel-latest/
-│           │   ├── SKILL.md
-│           │   └── scripts/channel-latest.sh
-│           └── transcript-summary/
-│               ├── SKILL.md
-│               └── scripts/summary.sh
+│           ├── mk-youtube-search/
+│           ├── mk-youtube-get-info/
+│           ├── mk-youtube-get-caption/
+│           ├── mk-youtube-get-audio/
+│           ├── mk-youtube-get-channel-latest/
+│           ├── mk-youtube-audio-transcribe/
+│           ├── mk-youtube-transcript-summarize/
+│           └── mk-youtube-summarize/
 ├── CLAUDE.md
 ├── LICENSE
 └── README.md
