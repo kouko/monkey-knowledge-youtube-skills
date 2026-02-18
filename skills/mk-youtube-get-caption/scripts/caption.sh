@@ -18,7 +18,8 @@ set -- "${ARGS[@]}"
 
 URL="$1"
 LANG="${2:-}"  # Empty means auto-detect original language
-OUTPUT_DIR="$MONKEY_KNOWLEDGE_TMP/youtube/captions"
+SKILL_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+OUTPUT_DIR="$SKILL_DIR/data"
 
 if [ -z "$URL" ]; then
     "$JQ" -n --arg status "error" \
@@ -166,20 +167,34 @@ if [ -z "$EXISTING_META" ]; then
     EXISTING_META="$META_JSON"
 fi
 
-# Determine target language for cache check
-CACHE_LANG="$LANG"
-if [ -z "$CACHE_LANG" ] || [ "$CACHE_LANG" = "auto" ]; then
-    CACHE_LANG=$(fetch_metadata "$NEED_COOKIES" "language") || CACHE_LANG=""
-    if [ -z "$CACHE_LANG" ] || [ "$CACHE_LANG" = "NA" ] || [ "$CACHE_LANG" = "null" ]; then
-        CACHE_LANG=""  # Will check for any language
+# --- Detect primary language (once) ---
+if [ -z "$LANG" ] || [ "$LANG" = "auto" ]; then
+    PRIMARY_LANG=$(fetch_metadata "$NEED_COOKIES" "language") || PRIMARY_LANG=""
+    if [ -z "$PRIMARY_LANG" ] || [ "$PRIMARY_LANG" = "NA" ] || [ "$PRIMARY_LANG" = "null" ]; then
+        PRIMARY_LANG=""
+        # Tier 1: First subtitle language from centralized metadata
+        if [ -n "$EXISTING_META" ]; then
+            PRIMARY_LANG=$(echo "$EXISTING_META" | "$JQ" -r '
+                (.subtitle_languages // []) | if length > 0 then .[0] else empty end
+            ' 2>/dev/null) || PRIMARY_LANG=""
+        fi
+        # Tier 2: First manual subtitle language from yt-dlp
+        if [ -z "$PRIMARY_LANG" ]; then
+            PRIMARY_LANG=$(fetch_metadata "$NEED_COOKIES" '%(subtitles)#j' | "$JQ" -r '
+                keys | if length > 0 then .[0] else empty end
+            ' 2>/dev/null) || PRIMARY_LANG=""
+        fi
+        # No Tier 3 — fallback handled by download strategy
     fi
+else
+    PRIMARY_LANG="$LANG"
 fi
 
 # --- Cache check (unless --force) ---
 if [ "$FORCE_REFRESH" != "true" ]; then
-    # If specific language requested, check for that language
-    if [ -n "$CACHE_LANG" ] && [[ "$CACHE_LANG" != *","* ]]; then
-        EXISTING_SRT=$(find_file_by_id "$OUTPUT_DIR" "$VIDEO_ID" "*.${CACHE_LANG}.srt")
+    # If specific language detected, check for that language
+    if [ -n "$PRIMARY_LANG" ]; then
+        EXISTING_SRT=$(find_file_by_id "$OUTPUT_DIR" "$VIDEO_ID" "*.${PRIMARY_LANG}.srt")
     else
         # Otherwise check for any srt file for this video
         EXISTING_SRT=$(find_file_by_id "$OUTPUT_DIR" "$VIDEO_ID" "*.srt")
@@ -250,19 +265,12 @@ if [ "$FORCE_REFRESH" = "true" ]; then
     rm -f "$OUTPUT_DIR/"*"__${VIDEO_ID}."*.srt "$OUTPUT_DIR/"*"__${VIDEO_ID}."*.txt 2>/dev/null || true
 fi
 
-# If no language specified, get video's original language
-if [ -z "$LANG" ] || [ "$LANG" = "auto" ]; then
-    LANG=$(fetch_metadata "$NEED_COOKIES" "language") || LANG=""
-    # If detection failed, use default priority
-    if [ -z "$LANG" ] || [ "$LANG" = "NA" ] || [ "$LANG" = "null" ]; then
-        LANG="en,ja,zh-TW,zh-Hant"
-    fi
-fi
-
 # Download subtitles with optional cookie authentication
 download_subtitles() {
-    local sub_type="$1"  # "manual" or "auto"
+    local sub_type="$1"    # "manual" or "auto"
+    local lang="$2"        # language code or "" for yt-dlp fallback
     local cookie_args=()
+    local sub_lang_args=()
 
     if [ "$NEED_COOKIES" = "true" ] && [ -n "$BROWSER" ]; then
         cookie_args=(--cookies-from-browser "$BROWSER")
@@ -277,37 +285,65 @@ download_subtitles() {
         done
     fi
 
+    if [ -n "$lang" ]; then
+        sub_lang_args=(--sub-lang "$lang")
+    fi
+
     if [ "$sub_type" = "auto" ]; then
         "$YT_DLP" --write-auto-subs \
-                  --sub-lang "$LANG" \
+                  "${sub_lang_args[@]}" \
                   --skip-download --convert-subs srt \
                   "${cookie_args[@]}" \
                   -o "$TEMP_DIR/%(id)s" "$URL" >&2 || true
     else
         "$YT_DLP" --write-subs \
-                  --sub-lang "$LANG" \
+                  "${sub_lang_args[@]}" \
                   --skip-download --convert-subs srt \
                   "${cookie_args[@]}" \
                   -o "$TEMP_DIR/%(id)s" "$URL" >&2 || true
     fi
 }
 
-# First try to download manual (author-uploaded) subtitles
 # Download to temp location first, then rename
 TEMP_DIR=$(mktemp -d)
 cleanup() { rm -rf "$TEMP_DIR"; }
 trap cleanup EXIT
-download_subtitles "manual"
 
-TEMP_SRT=$(ls -t "$TEMP_DIR"/*.srt 2>/dev/null | head -1)
-SUBTITLE_TYPE="manual"
+TEMP_SRT=""
+SUBTITLE_TYPE=""
 
-# If no manual subtitles found, try auto-generated
-if [ -z "$TEMP_SRT" ] || [ ! -f "$TEMP_SRT" ]; then
-    download_subtitles "auto"
-
+# Step 1-2: Primary language (if detected)
+if [ -n "$PRIMARY_LANG" ]; then
+    # Step 1: Manual subs in primary language
+    echo "[INFO] Step 1: Trying manual subtitles for '$PRIMARY_LANG'..." >&2
+    download_subtitles "manual" "$PRIMARY_LANG"
     TEMP_SRT=$(ls -t "$TEMP_DIR"/*.srt 2>/dev/null | head -1)
-    SUBTITLE_TYPE="auto-generated"
+    SUBTITLE_TYPE="manual"
+
+    # Step 2: Auto subs in primary language
+    if [ -z "$TEMP_SRT" ] || [ ! -f "$TEMP_SRT" ]; then
+        echo "[INFO] Step 2: Trying auto-generated subtitles for '$PRIMARY_LANG'..." >&2
+        download_subtitles "auto" "$PRIMARY_LANG"
+        TEMP_SRT=$(ls -t "$TEMP_DIR"/*.srt 2>/dev/null | head -1)
+        SUBTITLE_TYPE="auto-generated"
+    fi
+fi
+
+# Step 3: yt-dlp built-in fallback (no --sub-lang)
+if [ -z "$TEMP_SRT" ] || [ ! -f "$TEMP_SRT" ]; then
+    # 3a: Manual fallback
+    echo "[INFO] Step 3a: Trying manual subtitles (yt-dlp fallback)..." >&2
+    download_subtitles "manual" ""
+    TEMP_SRT=$(ls -t "$TEMP_DIR"/*.srt 2>/dev/null | head -1)
+    SUBTITLE_TYPE="manual"
+
+    # 3b: Auto fallback
+    if [ -z "$TEMP_SRT" ] || [ ! -f "$TEMP_SRT" ]; then
+        echo "[INFO] Step 3b: Trying auto-generated subtitles (yt-dlp fallback)..." >&2
+        download_subtitles "auto" ""
+        TEMP_SRT=$(ls -t "$TEMP_DIR"/*.srt 2>/dev/null | head -1)
+        SUBTITLE_TYPE="auto-generated"
+    fi
 fi
 
 if [ -n "$TEMP_SRT" ] && [ -f "$TEMP_SRT" ]; then

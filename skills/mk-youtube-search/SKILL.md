@@ -3,7 +3,7 @@ name: mk-youtube-search
 description: Search YouTube videos. Use when user wants to find videos by keyword or topic.
 license: MIT
 metadata:
-  version: 1.2.0
+  version: 1.2.1
   author: kouko
   tags:
     - youtube

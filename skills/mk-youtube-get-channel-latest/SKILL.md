@@ -3,7 +3,7 @@ name: mk-youtube-get-channel-latest
 description: Get latest videos, livestreams, shorts, or podcasts from a YouTube channel
 license: MIT
 metadata:
-  version: 1.0.0
+  version: 1.0.1
   author: kouko
   tags:
     - youtube

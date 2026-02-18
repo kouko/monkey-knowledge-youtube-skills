@@ -1,5 +1,12 @@
+# Claude Code local settings (machine-specific)
+.claude/settings.local.json
+
 # Whisper models (large files, download separately)
 **/models/*.bin
+
+# Skill output data (generated at runtime)
+skills/*/data/*
+!skills/*/data/.gitkeep
 
 # Keep .gitkeep files
 !**/.gitkeep

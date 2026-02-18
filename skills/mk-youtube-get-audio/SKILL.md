@@ -3,7 +3,7 @@ name: mk-youtube-get-audio
 description: Download YouTube video audio file. Use when user wants to extract audio or download music/podcast from a video.
 license: MIT
 metadata:
-  version: 1.1.0
+  version: 1.1.1
   author: kouko
   tags:
     - youtube

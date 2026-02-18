@@ -2,21 +2,17 @@
 # 統一命名規則與 metadata 管理函式
 
 # Portable temp directory handling
+# Respects $TMPDIR for sandboxed environments (e.g. Gemini CLI Seatbelt)
 get_base_tmp() {
-    case "$(uname -s)" in
-        Darwin|Linux)
-            # macOS/Linux: use fixed /tmp for cache consistency
-            echo "/tmp"
-            ;;
-        MINGW*|MSYS*|CYGWIN*)
-            # Windows (Git Bash/MSYS/Cygwin): use fixed /tmp for cache consistency
-            echo "/tmp"
-            ;;
-        *)
-            # Other platforms: fallback to /tmp
-            echo "/tmp"
-            ;;
-    esac
+    if [ -n "$TMPDIR" ]; then
+        echo "${TMPDIR%/}"
+    elif [ -n "$TEMP" ]; then
+        echo "$TEMP"
+    elif [ -n "$TMP" ]; then
+        echo "$TMP"
+    else
+        echo "/tmp"
+    fi
 }
 
 # Centralized directories (all skills share monkey_knowledge base)

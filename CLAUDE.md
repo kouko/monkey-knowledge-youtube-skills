@@ -24,6 +24,8 @@ skill-name/
 │   ├── jq-macos-arm64
 │   ├── yt-dlp-darwin-arm64
 │   └── ...
+├── data/              # Skill-local 輸出資料（.gitignore 排除）
+│   └── .gitkeep
 └── scripts/
     ├── _ensure_*.sh   # 依賴管理腳本（含自動下載邏輯）
     ├── _download_*.sh # 下載腳本
@@ -281,22 +283,27 @@ claude --plugin-dir /path/to/monkey-knowledge-youtube-skills
 #### 目錄結構
 
 ```
-/tmp/monkey_knowledge/
+# 集中式暫存（跨 skill 共用）
+$TMPDIR/monkey_knowledge/
 ├── youtube/
 │   ├── meta/                    # 集中式 metadata 儲存
 │   │   └── {YYYYMMDD}__{video_id}.meta.json
-│   ├── captions/                # 字幕檔案
-│   │   └── {YYYYMMDD}__{video_id}.{lang}.{srt|txt}
-│   ├── audio/                   # 音訊檔案
-│   │   └── {YYYYMMDD}__{video_id}.{ext}
-│   ├── transcribe/              # 轉錄結果
-│   │   └── {YYYYMMDD}__{video_id}.{json|txt}
-│   └── summaries/               # 摘要檔案
-│       └── {YYYYMMDD}__{video_id}.{lang}.md
+│   └── audio/                   # 音訊檔案（get-audio 輸出）
+│       └── {YYYYMMDD}__{video_id}.{ext}
 └── build/                       # 建置過程暫存
     ├── whisper-cpp-$$/
     ├── whisper-transcribe-$$/
     └── ffmpeg-download-$$/
+
+# Skill-local 輸出（各 skill 獨立管理）
+skills/mk-youtube-get-caption/data/
+└── {YYYYMMDD}__{video_id}.{lang}.{srt|txt}
+
+skills/mk-youtube-audio-transcribe/data/
+└── {YYYYMMDD}__{video_id}.{json|txt}
+
+skills/mk-youtube-transcript-summarize/data/
+└── {YYYYMMDD}__{video_id}.md
 ```
 
 #### Metadata JSON 格式
@@ -353,15 +360,15 @@ claude --plugin-dir /path/to/monkey-knowledge-youtube-skills
 
 #### 命名範例
 
-| 檔案類型 | 命名範例 |
-|---------|---------|
-| Metadata | `20091025__dQw4w9WgXcQ.meta.json` |
-| 字幕 (SRT) | `20091025__dQw4w9WgXcQ.en.srt` |
-| 字幕 (TXT) | `20091025__dQw4w9WgXcQ.en.txt` |
-| 音訊 | `20091025__dQw4w9WgXcQ.m4a` |
-| 轉錄 (JSON) | `20091025__dQw4w9WgXcQ.json` |
-| 轉錄 (TXT) | `20091025__dQw4w9WgXcQ.txt` |
-| 摘要 | `20091025__dQw4w9WgXcQ.en.md` |
+| 檔案類型 | 存放位置 | 命名範例 |
+|---------|---------|---------|
+| Metadata | `$TMPDIR/.../meta/` | `20091025__dQw4w9WgXcQ.meta.json` |
+| 字幕 (SRT) | `get-caption/data/` | `20091025__dQw4w9WgXcQ.en.srt` |
+| 字幕 (TXT) | `get-caption/data/` | `20091025__dQw4w9WgXcQ.en.txt` |
+| 音訊 | `$TMPDIR/.../audio/` | `20091025__dQw4w9WgXcQ.m4a` |
+| 轉錄 (JSON) | `audio-transcribe/data/` | `20091025__dQw4w9WgXcQ.json` |
+| 轉錄 (TXT) | `audio-transcribe/data/` | `20091025__dQw4w9WgXcQ.txt` |
+| 摘要 | `transcript-summarize/data/` | `20091025__dQw4w9WgXcQ.md` |
 
 #### 長度限制
 
@@ -478,33 +485,38 @@ write_or_merge_meta "$META_DIR/$BASENAME.meta.json" "$META_JSON" "true"
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                 Centralized Metadata Store                       │
-│                 /tmp/monkey_knowledge/youtube/meta/              │
+│            Centralized ($TMPDIR/monkey_knowledge/)              │
 ├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  ┌──────────────┐   ┌────────────────────┐                      │
-│  │ get-info     │──▶│ 寫入完整 metadata   │ (partial: false)     │
-│  └──────────────┘   └────────────────────┘                      │
-│                                                                  │
-│  ┌──────────────────┐   ┌────────────────────┐                  │
-│  │ channel-latest   │──▶│ 批次寫入部分 meta  │ (partial: true)    │
-│  └──────────────────┘   └────────────────────┘                  │
-│                                                                  │
-│  ┌──────────────┐   ┌────────────────────┐                      │
-│  │ get-caption  │──▶│ 讀取或提取 metadata │ → 寫入 partial       │
-│  └──────────────┘   └────────────────────┘                      │
-│                                                                  │
-│  ┌──────────────┐   ┌────────────────────┐                      │
-│  │ get-audio    │──▶│ 讀取或提取 metadata │ → 寫入 partial       │
-│  └──────────────┘   └────────────────────┘                      │
-│                                                                  │
-│  ┌──────────────┐   ┌────────────────────┐                      │
-│  │ transcribe   │──▶│ 從檔名提取 ID       │ → 讀取 metadata      │
-│  └──────────────┘   └────────────────────┘                      │
-│                                                                  │
-│  ┌──────────────┐   ┌────────────────────┐                      │
-│  │ summarize    │──▶│ 從檔名提取 ID       │ → 讀取 metadata      │
-│  └──────────────┘   └────────────────────┘                      │
-│                                                                  │
+│  youtube/meta/     ← 所有 skill 共用讀寫                        │
+│  youtube/audio/    ← get-audio 輸出                             │
+│  build/            ← 建置暫存                                   │
 └─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│            Skill-local (skills/*/data/)                          │
+├─────────────────────────────────────────────────────────────────┤
+│  get-caption/data/           ← 字幕 SRT/TXT                    │
+│  audio-transcribe/data/      ← 轉錄 JSON/TXT                   │
+│  transcript-summarize/data/  ← 摘要 MD                          │
+└─────────────────────────────────────────────────────────────────┘
+
+資料流:
+  search/get-info/channel-latest ──▶ meta/ (寫入)
+  get-caption  ──▶ 讀取 meta/ → 輸出到 data/
+  get-audio    ──▶ 讀取 meta/ → 輸出到 audio/
+  transcribe   ──▶ 讀取 meta/ + audio file → 輸出到 data/
+  summarize    ──▶ 讀取 meta/ + transcript file → 輸出到 data/
 ```
+
+### 版本管理
+
+#### 版本檔案位置
+
+| 層級 | 檔案 | 欄位 |
+|------|------|------|
+| Plugin | `.claude-plugin/plugin.json` | `version` |
+| Marketplace | `.claude-plugin/marketplace.json` | `metadata.version` + `plugins[0].version` |
+| Gemini | `gemini-extension.json` | `version` |
+| 各 Skill | `skills/*/SKILL.md` | `metadata.version` |
+
+發布流程詳見 `/project:release`。

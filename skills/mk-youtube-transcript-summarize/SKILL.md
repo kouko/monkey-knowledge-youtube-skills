@@ -3,7 +3,7 @@ name: mk-youtube-transcript-summarize
 description: Summarize YouTube video content with structured output. Use when user wants a detailed summary from a transcript file path.
 license: MIT
 metadata:
-  version: 2.0.0
+  version: 2.1.0
   author: kouko
   tags:
     - youtube
@@ -21,19 +21,21 @@ Generate a structured, high-quality summary of a YouTube video from its transcri
 
 ```
 /mk-youtube-transcript-summarize <transcript_file_path> [--force]
+/mk-youtube-transcript-summarize --check <URL_or_video_id>
 ```
 
 ## Parameters
 
 | Parameter | Required | Default | Description |
 |-----------|----------|---------|-------------|
-| transcript_file_path | Yes | - | Path to transcript file (.txt) |
+| transcript_file_path | Yes* | - | Path to transcript file (.txt). *Not needed with `--check`. |
 | --force | No | false | Force re-generate summary even if cached file exists |
+| --check | No | false | Check if summary exists for a URL or video_id (no transcript file needed) |
 
 ## Examples
 
-- `/mk-youtube-transcript-summarize /tmp/monkey_knowledge/youtube/captions/20091025__dQw4w9WgXcQ.en.txt`
-- `/mk-youtube-transcript-summarize /tmp/monkey_knowledge/youtube/transcribe/20091025__dQw4w9WgXcQ.txt`
+- `/mk-youtube-transcript-summarize /path/to/captions/20091025__dQw4w9WgXcQ.en.txt`
+- `/mk-youtube-transcript-summarize /path/to/transcribe/20091025__dQw4w9WgXcQ.txt`
 
 **Typical workflow:**
 
@@ -41,17 +43,62 @@ Generate a structured, high-quality summary of a YouTube video from its transcri
 /mk-youtube-get-caption https://youtube.com/watch?v=xxx
 → outputs transcript file path
 
-/mk-youtube-transcript-summarize /tmp/monkey_knowledge/youtube/captions/20091025__VIDEO_ID.en.txt
-→ generates structured summary saved to /tmp/monkey_knowledge/youtube/summaries/20091025__VIDEO_ID.en.md
+/mk-youtube-transcript-summarize /path/to/captions/20091025__VIDEO_ID.en.txt
+→ generates structured summary saved to {baseDir}/data/20091025__VIDEO_ID.en.md
 ```
+
+## Check Mode
+
+Check if a cached summary exists without requiring a transcript file:
+
+```
+/mk-youtube-transcript-summarize --check <URL_or_video_id>
+```
+
+### Check Mode Examples
+
+- `/mk-youtube-transcript-summarize --check https://youtube.com/watch?v=dQw4w9WgXcQ`
+- `/mk-youtube-transcript-summarize --check dQw4w9WgXcQ`
+
+### Check Mode Output
+
+**Summary exists:**
+```json
+{
+  "status": "success",
+  "exists": true,
+  "output_summary": "{baseDir}/data/20091025__dQw4w9WgXcQ.en.md",
+  "summary_char_count": 5000,
+  "summary_line_count": 120,
+  "video_id": "dQw4w9WgXcQ",
+  "title": "Video Title",
+  "channel": "Channel Name",
+  "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+}
+```
+
+**Summary does not exist:**
+```json
+{
+  "status": "success",
+  "exists": false,
+  "video_id": "dQw4w9WgXcQ",
+  "title": "",
+  "channel": "",
+  "url": ""
+}
+```
+
+When `exists: true`, read the summary file at `output_summary` and display its COMPLETE content (Full Display Rule applies).
 
 ## How it Works
 
-1. Execute: `{baseDir}/scripts/summary.sh "<transcript_file_path>"`
+1. Execute: `{baseDir}/scripts/summary.sh "<transcript_file_path>"` (normal mode)
+   OR: `{baseDir}/scripts/summary.sh --check "<URL_or_video_id>"` (check mode)
 2. Parse JSON output to get `source_transcript`, `output_summary`, `char_count`, and `strategy`
 3. Follow the **Processing Strategy** indicated by `strategy` field
 4. Generate a structured summary following the **Summary Generation Rules**
-5. **Save to `/tmp/monkey_knowledge/youtube/summaries/<basename>.md`** using Write tool
+5. **Save to `{baseDir}/data/<basename>.md`** using Write tool (use `output_summary` path from JSON)
 6. **Display the FULL summary content** to the user exactly as written to the file — do NOT abbreviate, condense, or re-summarize
 7. Include file path in response footer
 
@@ -201,14 +248,14 @@ After obtaining the transcript, generate the summary using EXACTLY this structur
 
 ## Save Summary to File
 
-After generating the summary, save it using the Write tool:
+After generating the summary, save it to the **skill-local `data/` directory** using the Write tool:
 
-- **Output directory**: `/tmp/monkey_knowledge/youtube/summaries/`
+- **Output path**: Use `output_summary` from the script JSON output (points to `{baseDir}/data/<basename>.md`)
 - **Filename**: `<transcript_basename>.md` (preserves unified naming format)
 
 **Example:**
-- Input: `/tmp/monkey_knowledge/youtube/captions/20091025__dQw4w9WgXcQ.en.txt`
-- Output: `/tmp/monkey_knowledge/youtube/summaries/20091025__dQw4w9WgXcQ.en.md`
+- Input: `.../20091025__dQw4w9WgXcQ.en.txt`
+- Output: `{baseDir}/data/20091025__dQw4w9WgXcQ.en.md`
 
 **CRITICAL — Full Display Rule**: After saving the summary file, you MUST display the COMPLETE summary content to the user in your response. Output the full markdown content exactly as written to the file. Do NOT:
 - Re-summarize or condense the summary
@@ -221,17 +268,18 @@ The user expects to see the full summary directly in the conversation without ne
 End your response with the file path:
 ```
 ---
-Summary saved to: `/tmp/monkey_knowledge/youtube/summaries/20091025__dQw4w9WgXcQ.en.md`
+Summary saved to: `{output_summary path from JSON}`
 ```
 
 ## Output Format
 
-Script JSON output:
+### Normal Mode Output
+
 ```json
 {
   "status": "success",
-  "source_transcript": "/tmp/monkey_knowledge/youtube/captions/20091025__VIDEO_ID.en.txt",
-  "output_summary": "/tmp/monkey_knowledge/youtube/summaries/20091025__VIDEO_ID.en.md",
+  "source_transcript": "/path/to/20091025__VIDEO_ID.en.txt",
+  "output_summary": "{baseDir}/data/20091025__VIDEO_ID.en.md",
   "char_count": 30000,
   "line_count": 450,
   "strategy": "standard",
@@ -247,23 +295,32 @@ Script JSON output:
 ```json
 {
   "status": "success",
-  "output_summary": "/tmp/monkey_knowledge/youtube/summaries/20091025__VIDEO_ID.en.md",
+  "source_transcript": "/path/to/20091025__VIDEO_ID.en.txt",
+  "output_summary": "{baseDir}/data/20091025__VIDEO_ID.en.md",
   "cached": true,
   "summary_char_count": 5000,
   "summary_line_count": 120,
-  ...
+  "video_id": "dQw4w9WgXcQ",
+  "title": "Video Title",
+  "channel": "Channel Name",
+  "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
 }
 ```
 
-When `cached: true`, the summary file already exists — you may read and display it directly without regenerating.
+When `cached: true`, the summary file already exists — read and display it directly without regenerating.
 
-The script automatically extracts video metadata from the centralized metadata store (`/tmp/monkey_knowledge/youtube/meta/`) if available.
+### Check Mode Output
+
+See [Check Mode](#check-mode) section above.
+
+The script automatically extracts video metadata from the centralized metadata store if available.
 
 ## Notes
 
 - **File caching**: If summary already exists for this video, it will be reused (returns `cached: true`)
+- **Check mode**: Use `--check` to check if a cached summary exists without a transcript file
 - **Force refresh**: Use `--force` flag to re-generate summary even if cached file exists
 - This skill does NOT download videos or subtitles — use `/mk-youtube-get-caption` first to obtain a transcript file
 - Uses system jq if available, otherwise auto-downloads on first run
 - For best results, combine with `/mk-youtube-get-info` to include the Video Info table in the summary
-- Summary is automatically saved to `/tmp/monkey_knowledge/youtube/summaries/` directory
+- Summary is saved to the skill-local `data/` directory

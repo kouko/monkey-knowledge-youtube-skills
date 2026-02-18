@@ -78,8 +78,8 @@ mk-youtube-get-caption/
 ```json
 {
   "status": "success",
-  "file_path": "/tmp/monkey_knowledge/youtube/captions/20240101__VIDEO_ID.en.srt",
-  "text_file_path": "/tmp/monkey_knowledge/youtube/captions/20240101__VIDEO_ID.en.txt",
+  "file_path": "{baseDir}/data/20240101__VIDEO_ID.en.srt",
+  "text_file_path": "{baseDir}/data/20240101__VIDEO_ID.en.txt",
   "language": "en",
   "subtitle_type": "manual",
   "char_count": 30287,
@@ -198,14 +198,14 @@ The script downloads subtitles in this order:
 
 The `subtitle_type` field in the output indicates which type was downloaded.
 
-## Temporary Files
+## Output Files
 
 | Location | Purpose |
 |----------|---------|
-| `/tmp/monkey_knowledge/youtube/captions/{YYYYMMDD}__{video_id}.{lang}.srt` | Downloaded SRT subtitle files |
-| `/tmp/monkey_knowledge/youtube/captions/{YYYYMMDD}__{video_id}.{lang}.txt` | Plain text version (no timestamps) |
+| `{baseDir}/data/{YYYYMMDD}__{video_id}.{lang}.srt` | Downloaded SRT subtitle files |
+| `{baseDir}/data/{YYYYMMDD}__{video_id}.{lang}.txt` | Plain text version (no timestamps) |
 
-**Note**: Files in `/tmp/` are cleared on system reboot.
+Files are stored in the skill-local `data/` directory and persist across sessions.
 
 ## Use Cases
 

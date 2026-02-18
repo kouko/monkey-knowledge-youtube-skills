@@ -5,22 +5,129 @@ set -e
 source "$(dirname "$0")/_utility__ensure_jq.sh"
 source "$(dirname "$0")/_utility__naming.sh"
 
-# --- Parse --force flag from any position ---
+# --- Parse flags from any position ---
 FORCE_REFRESH=false
+CHECK_MODE=false
 ARGS=()
 for arg in "$@"; do
     case "$arg" in
         --force|-f) FORCE_REFRESH=true ;;
+        --check|-c) CHECK_MODE=true ;;
         *) ARGS+=("$arg") ;;
     esac
 done
 set -- "${ARGS[@]}"
 
+# Summaries directory (skill-local) — defined early for both --check and normal mode
+SUMMARY_DIR="$(cd "$(dirname "$0")/.." && pwd)/data"
+mkdir -p "$SUMMARY_DIR"
+
+# --- Helper: read metadata fields from centralized store ---
+read_meta_fields() {
+    local vid="$1"
+    META_VIDEO_ID=""
+    META_TITLE=""
+    META_CHANNEL=""
+    META_URL=""
+    if [ -n "$vid" ]; then
+        local meta
+        meta=$(read_meta "$vid")
+        if [ -n "$meta" ]; then
+            META_VIDEO_ID=$(echo "$meta" | "$JQ" -r '.video_id // empty')
+            META_TITLE=$(echo "$meta" | "$JQ" -r '.title // empty')
+            META_CHANNEL=$(echo "$meta" | "$JQ" -r '.channel // empty')
+            META_URL=$(echo "$meta" | "$JQ" -r '.url // empty')
+        fi
+    fi
+}
+
+# --- Check mode: lookup only, no transcript file needed ---
+if [ "$CHECK_MODE" = "true" ]; then
+    INPUT="$1"
+    if [ -z "$INPUT" ]; then
+        "$JQ" -n --arg status "error" \
+            --arg message "Usage: summary.sh --check <URL_or_video_id>" \
+            '{status: $status, message: $message}'
+        exit 1
+    fi
+
+    # Extract video_id: try URL first, then treat as raw 11-char video_id
+    VIDEO_ID=$(extract_video_id_from_url "$INPUT")
+    if [ -z "$VIDEO_ID" ]; then
+        if [[ "$INPUT" =~ ^[a-zA-Z0-9_-]{11}$ ]]; then
+            VIDEO_ID="$INPUT"
+        else
+            "$JQ" -n --arg status "error" \
+                --arg message "Could not extract video_id from: $INPUT" \
+                '{status: $status, message: $message}'
+            exit 1
+        fi
+    fi
+
+    # Search for existing summary in data/
+    EXISTING_SUMMARY=""
+    if [ -d "$SUMMARY_DIR" ]; then
+        EXISTING_SUMMARY=$(find_file_by_id "$SUMMARY_DIR" "$VIDEO_ID" "*.md")
+    fi
+
+    # Read metadata from centralized store
+    read_meta_fields "$VIDEO_ID"
+
+    if [ -n "$EXISTING_SUMMARY" ] && [ -f "$EXISTING_SUMMARY" ]; then
+        SUMMARY_CHAR_COUNT=$(wc -c < "$EXISTING_SUMMARY" | tr -d ' ')
+        SUMMARY_LINE_COUNT=$(wc -l < "$EXISTING_SUMMARY" | tr -d ' ')
+
+        echo "[INFO] Found cached summary: $EXISTING_SUMMARY" >&2
+
+        "$JQ" -n \
+            --arg status "success" \
+            --argjson exists true \
+            --arg output_summary "$EXISTING_SUMMARY" \
+            --argjson summary_char_count "$SUMMARY_CHAR_COUNT" \
+            --argjson summary_line_count "$SUMMARY_LINE_COUNT" \
+            --arg video_id "${META_VIDEO_ID:-$VIDEO_ID}" \
+            --arg title "$META_TITLE" \
+            --arg channel "$META_CHANNEL" \
+            --arg url "$META_URL" \
+            '{
+                status: $status,
+                exists: $exists,
+                output_summary: $output_summary,
+                summary_char_count: $summary_char_count,
+                summary_line_count: $summary_line_count,
+                video_id: $video_id,
+                title: $title,
+                channel: $channel,
+                url: $url
+            }'
+    else
+        echo "[INFO] No cached summary found for: $VIDEO_ID" >&2
+
+        "$JQ" -n \
+            --arg status "success" \
+            --argjson exists false \
+            --arg video_id "${META_VIDEO_ID:-$VIDEO_ID}" \
+            --arg title "$META_TITLE" \
+            --arg channel "$META_CHANNEL" \
+            --arg url "$META_URL" \
+            '{
+                status: $status,
+                exists: $exists,
+                video_id: $video_id,
+                title: $title,
+                channel: $channel,
+                url: $url
+            }'
+    fi
+    exit 0
+fi
+
+# --- Normal mode: requires transcript file path ---
 FILE_PATH="$1"
 
 if [ -z "$FILE_PATH" ]; then
     "$JQ" -n --arg status "error" \
-        --arg message "Usage: summary.sh <transcript_file_path>" \
+        --arg message "Usage: summary.sh <transcript_file_path> [--force] | summary.sh --check <URL_or_video_id>" \
         '{status: $status, message: $message}'
     exit 1
 fi
@@ -46,37 +153,19 @@ else
     STRATEGY="chunked"
 fi
 
-# Calculate output summary path
+# Calculate output summary path (skill-local data/)
 BASENAME=$(basename "$ABS_PATH")
 BASENAME_NO_EXT="${BASENAME%.*}"
-OUTPUT_SUMMARY="$MONKEY_KNOWLEDGE_TMP/youtube/summaries/${BASENAME_NO_EXT}.md"
+OUTPUT_SUMMARY="$SUMMARY_DIR/${BASENAME_NO_EXT}.md"
 
-# Extract video ID from filename (format: {YYYYMMDD}__{id}__{title}.{lang}.{ext})
-# Video ID is extracted from position 10-20 (after the date prefix)
+# Extract video ID from filename (format: {YYYYMMDD}__{video_id}.{lang}.{ext})
 VIDEO_ID=""
 if [[ "$BASENAME_NO_EXT" == *"__"* ]]; then
     VIDEO_ID=$(extract_video_id_from_basename "$BASENAME_NO_EXT")
 fi
 
 # Read metadata from centralized store (if available)
-META_VIDEO_ID=""
-META_TITLE=""
-META_CHANNEL=""
-META_URL=""
-EXISTING_META=""
-if [ -n "$VIDEO_ID" ]; then
-    EXISTING_META=$(read_meta "$VIDEO_ID")
-    if [ -n "$EXISTING_META" ]; then
-        META_VIDEO_ID=$(echo "$EXISTING_META" | "$JQ" -r '.video_id // empty')
-        META_TITLE=$(echo "$EXISTING_META" | "$JQ" -r '.title // empty')
-        META_CHANNEL=$(echo "$EXISTING_META" | "$JQ" -r '.channel // empty')
-        META_URL=$(echo "$EXISTING_META" | "$JQ" -r '.url // empty')
-    fi
-fi
-
-# Summaries directory
-SUMMARY_DIR="$MONKEY_KNOWLEDGE_TMP/youtube/summaries"
-mkdir -p "$SUMMARY_DIR"
+read_meta_fields "$VIDEO_ID"
 
 # --- Cache check (unless --force) ---
 if [ "$FORCE_REFRESH" != "true" ] && [ -n "$VIDEO_ID" ]; then

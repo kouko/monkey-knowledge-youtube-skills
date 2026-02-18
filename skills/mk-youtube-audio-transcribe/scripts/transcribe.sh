@@ -156,8 +156,8 @@ fi
 TEMP_DIR="$MONKEY_KNOWLEDGE_TMP/build/whisper-transcribe-$$"
 mkdir -p "$TEMP_DIR"
 
-# Output directory (persistent)
-OUTPUT_DIR="$MONKEY_KNOWLEDGE_TMP/youtube/transcribe"
+# Output directory (skill-local)
+OUTPUT_DIR="$SCRIPT_DIR/../data"
 mkdir -p "$OUTPUT_DIR"
 
 # Generate output filename from audio file (preserving unified naming)

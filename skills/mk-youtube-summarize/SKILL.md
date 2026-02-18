@@ -3,7 +3,7 @@ name: mk-youtube-summarize
 description: Summarize YouTube videos or channel's latest videos. Use for single video URL, channel URL, or @handle to summarize recent uploads.
 license: MIT
 metadata:
-  version: 1.0.0
+  version: 1.1.0
   author: kouko
   tags:
     - youtube
@@ -20,7 +20,7 @@ End-to-end pipeline that summarizes YouTube videos by orchestrating existing ski
 ## Quick Start
 
 ```
-/mk-youtube-summarize <URL|Channel> [count]
+/mk-youtube-summarize <URL|Channel> [count] [--force]
 ```
 
 | Parameter | Description |
@@ -28,6 +28,7 @@ End-to-end pipeline that summarizes YouTube videos by orchestrating existing ski
 | `URL` | Single video URL (existing behavior) |
 | `Channel` | Channel URL, @handle, or channel name |
 | `count` | Number of videos to process (default: 3, for channels only) |
+| `--force` | Force re-generate summary even if cached version exists |
 
 ## Examples
 
@@ -56,32 +57,41 @@ End-to-end pipeline that summarizes YouTube videos by orchestrating existing ski
 URL (single video)
  │
  ▼
-┌───────────────────────────┐
-│ /mk-youtube-get-info      │  ← Step 1: Get metadata + check subtitle availability
-└────────────┬──────────────┘
-             │
+┌──────────────────────────────────────┐
+│ /mk-youtube-transcript-summarize     │  ← Step 0.5: Check cache
+│          --check <URL>               │
+└────────────┬─────────────────────────┘
         ┌────┴────┐
         │         │
-   has_subs    no_subs
+   exists:true  exists:false
         │         │
         ▼         ▼
-┌───────────────┐ ┌─────────────────┐
-│/mk-youtube-   │ │/mk-youtube-     │  ← Step 2a or 2b
-│get-caption    │ │get-audio        │
-└───────┬───────┘ └────────┬────────┘
-        │                  │
-        │                  ▼
-        │         ┌─────────────────┐
-        │         │/mk-youtube-     │  ← Step 2c (audio path only)
-        │         │audio-transcribe │
-        │         └────────┬────────┘
-        │                  │
-        └────────┬─────────┘
-                 │
-                 ▼
-┌────────────────────────────────┐
-│ /mk-youtube-transcript-summarize │  ← Step 3: MANDATORY — NEVER SKIP
-└────────────────────────────────┘
+┌─────────────┐  ┌───────────────────────────┐
+│ Read & show │  │ /mk-youtube-get-info      │  ← Step 1
+│  ✅ DONE    │  └────────────┬──────────────┘
+└─────────────┘               │
+                         ┌────┴────┐
+                         │         │
+                    has_subs    no_subs
+                         │         │
+                         ▼         ▼
+                 ┌───────────────┐ ┌─────────────────┐
+                 │/mk-youtube-   │ │/mk-youtube-     │  ← Step 2a or 2b
+                 │get-caption    │ │get-audio        │
+                 └───────┬───────┘ └────────┬────────┘
+                         │                  │
+                         │                  ▼
+                         │         ┌─────────────────┐
+                         │         │/mk-youtube-     │  ← Step 2c (audio path only)
+                         │         │audio-transcribe │
+                         │         └────────┬────────┘
+                         │                  │
+                         └────────┬─────────┘
+                                  │
+                                  ▼
+                 ┌────────────────────────────────┐
+                 │ /mk-youtube-transcript-summarize │  ← Step 3: MANDATORY
+                 └────────────────────────────────┘
 ```
 
 ### Channel Flow
@@ -98,18 +108,20 @@ Channel (@handle, channel URL, or video URL + "channel")
              ▼
 ┌─────────────────────────────────┐
 │ For each video (1..N):          │
-│   Execute full Single Video     │
-│   pipeline (Steps 1 → 2 → 3)    │
+│   Step 0.5: --check cache       │
+│   ├─ exists:true → Read & show  │
+│   └─ exists:false → Full        │
+│      pipeline (Steps 1 → 2 → 3) │
 │   before moving to next video   │
 └─────────────────────────────────┘
              │
              ▼
-        ✅ All summaries generated
+        ✅ All summaries displayed
 ```
 
 ## Steps
 
-### Step 0: Detect Input Type
+### Step 0: Detect Input Type & Extract URL
 
 Determine whether input is a single video or a channel:
 
@@ -125,6 +137,29 @@ Determine whether input is a single video or a channel:
 - Input starts with `@` (e.g., `@RickAstleyYT`)
 - Input is plain text without URL format (treated as @handle)
 - User explicitly provides `channel` keyword after video URL
+
+### Step 0.5: Check for Existing Summary (unless --force)
+
+**Skip this step if `--force` is specified.**
+
+For single video input, use the Skill tool to invoke `/mk-youtube-transcript-summarize` with `--check`:
+
+```
+/mk-youtube-transcript-summarize --check <URL>
+```
+
+**If `exists: true`:**
+1. Read the summary file at `output_summary` using the Read tool
+2. Display the COMPLETE summary content (Full Display Rule applies)
+3. Include metadata footer (title, channel, url from the check output)
+4. **STOP** — do NOT proceed to Steps 1-3
+
+**If `exists: false`:**
+- Proceed to Step 1 as normal
+
+**For channel flow**, the check happens per-video inside the loop after getting the video list. Each video URL is checked individually.
+
+---
 
 ### Channel Path: Get Latest Videos
 
@@ -144,15 +179,15 @@ The output is a JSON array of video objects. For each video in the array, execut
 Processing 3 videos from @RickAstleyYT...
 
 [1/3] Rick Astley - Never Gonna Give You Up
-→ Summary: /tmp/monkey_knowledge/youtube/summaries/20091025__dQw4w9WgXcQ__...md
+→ ✅ Cached summary found, displaying...
 
 [2/3] Rick Astley - Together Forever
-→ Summary: /tmp/monkey_knowledge/youtube/summaries/19880201__xyz123__...md
+→ Summary generated (new)
 
 [3/3] Rick Astley - Take Me to Your Heart
-→ Summary: /tmp/monkey_knowledge/youtube/summaries/19880815__abc456__...md
+→ ✅ Cached summary found, displaying...
 
-✅ Completed: 3/3 summaries generated
+✅ Completed: 3/3 summaries displayed (2 cached, 1 new)
 ```
 
 ---
@@ -206,8 +241,10 @@ Save the `text_file_path` from the output for Step 3.
 Use the Skill tool to invoke `/mk-youtube-transcript-summarize` with the `text_file_path` obtained from Step 2:
 
 ```
-/mk-youtube-transcript-summarize <text_file_path>
+/mk-youtube-transcript-summarize <text_file_path> [--force]
 ```
+
+Pass `--force` if the user specified it for `mk-youtube-summarize`.
 
 **CRITICAL**: You MUST use the Skill tool to invoke `/mk-youtube-transcript-summarize`. Do NOT generate summaries directly. The skill contains critical rules for:
 - Compression ratio calibration
@@ -230,6 +267,8 @@ When summarizing multiple videos (either from a channel or manually specified):
 ## Notes
 
 - This is a pure orchestration skill — it does not have its own scripts
+- **Summary caching**: Before running the full pipeline, checks if a cached summary exists via `--check`. Use `--force` to bypass and regenerate.
 - Each sub-skill handles its own dependency management (yt-dlp, jq, whisper-cli, etc.)
+- Each sub-skill also has its own file caching — repeated runs use local cached files
 - For batch processing, consider limiting count to avoid context overflow
 - Channel processing uses `/mk-youtube-get-channel-latest` which auto-detects channel from video URLs

@@ -3,7 +3,7 @@ name: mk-youtube-get-info
 description: Get YouTube video metadata (title, channel, duration, views, subtitle availability). Use when user wants video details or needs to check subtitle availability before summarization.
 license: MIT
 metadata:
-  version: 1.0.0
+  version: 1.0.1
   author: kouko
   tags:
     - youtube
