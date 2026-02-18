@@ -15,7 +15,7 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SKILLS_DIR="$SCRIPT_DIR/../plugins/youtube-summarizer/skills"
+SKILLS_DIR="$SCRIPT_DIR/../skills"
 
 # ANSI colors
 RED='\033[0;31m'

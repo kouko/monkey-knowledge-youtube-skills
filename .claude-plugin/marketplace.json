@@ -5,15 +5,15 @@
     "url": "https://github.com/kouko"
   },
   "metadata": {
-    "description": "Knowledge and productivity skills marketplace for Claude Code",
-    "version": "1.0.0"
+    "description": "YouTube video summarization skills for AI coding assistants",
+    "version": "1.0.3"
   },
   "plugins": [
     {
       "name": "youtube-summarizer",
-      "source": "./plugins/youtube-summarizer",
+      "source": ".",
       "description": "Summarize YouTube videos from URL or transcript",
-      "version": "1.0.0",
+      "version": "1.0.3",
       "category": "productivity",
       "keywords": ["youtube", "video", "summarize", "transcript"]
     }

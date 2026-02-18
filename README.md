@@ -1,12 +1,12 @@
-# Monkey Knowledge Skills
+# YouTube Summarizer
 
-A plugin marketplace for AI coding assistants. Follows the [Agent Skills](https://agentskills.io/) open standard for cross-platform compatibility.
+Summarize YouTube videos from URL or transcript. Follows the [Agent Skills](https://agentskills.io/) open standard for cross-platform compatibility.
 
 ## Platform Compatibility
 
 | Platform | Support | Installation |
 |----------|---------|--------------|
-| Claude Code | ✅ | `/plugin marketplace add` |
+| Claude Code | ✅ | `/plugin install` or `/plugin marketplace add` |
 | Gemini CLI | ✅ | `gemini extensions install` |
 | OpenCode | ✅ | Native Agent Skills |
 | VS Code Copilot | ✅ | Native Agent Skills |
@@ -15,61 +15,81 @@ A plugin marketplace for AI coding assistants. Follows the [Agent Skills](https:
 
 ### Claude Code
 
+**方式 1：直接安裝**
 ```bash
-# 1. Add marketplace
-/plugin marketplace add kouko/monkey-knowledge-skills
+/plugin install https://github.com/kouko/monkey-knowledge-youtube-skills
+```
 
-# 2. Install plugin
-/plugin install youtube-summarizer@kouko-monkey-knowledge-skills
+**方式 2：透過 Marketplace 瀏覽安裝**
+```bash
+# 1. 加入 marketplace
+/plugin marketplace add kouko/monkey-knowledge-youtube-skills
+
+# 2. 開啟互動介面
+/plugin
+
+# 3. 進入 Discover 分頁，選擇 youtube-summarizer 安裝
 ```
 
 ### Gemini CLI
 
 ```bash
-gemini extensions install https://github.com/kouko/monkey-knowledge-skills
+gemini extensions install https://github.com/kouko/monkey-knowledge-youtube-skills
 ```
 
 ### OpenCode
 
 ```bash
-curl -L https://github.com/kouko/monkey-knowledge-skills/archive/refs/heads/main.tar.gz | \
-  tar -xz --strip-components=3 -C ~/.config/opencode/skills/ \
-  "monkey-knowledge-skills-main/plugins/youtube-summarizer/skills/"
+curl -L https://github.com/kouko/monkey-knowledge-youtube-skills/archive/refs/heads/main.tar.gz | \
+  tar -xz --strip-components=1 -C ~/.config/opencode/skills/ \
+  "monkey-knowledge-youtube-skills-main/skills/"
 ```
 
-## Available Plugins
+## Available Skills
 
-| Plugin | Description | Skills |
-|--------|-------------|--------|
-| `youtube-summarizer` | Summarize YouTube videos | `mk-youtube-search`, `mk-youtube-get-info`, `mk-youtube-get-caption`, `mk-youtube-get-audio`, `mk-youtube-get-channel-latest`, `mk-youtube-audio-transcribe`, `mk-youtube-transcript-summarize`, `mk-youtube-summarize` |
+| Skill | Description |
+|-------|-------------|
+| `mk-youtube-search` | Search YouTube videos |
+| `mk-youtube-get-info` | Get video metadata |
+| `mk-youtube-get-caption` | Download captions/subtitles |
+| `mk-youtube-get-audio` | Download audio track |
+| `mk-youtube-get-channel-latest` | Get latest videos from a channel |
+| `mk-youtube-audio-transcribe` | Transcribe audio using Whisper |
+| `mk-youtube-transcript-summarize` | Summarize transcript |
+| `mk-youtube-summarize` | End-to-end video summarization |
 
-## Plugin Details
+## Usage
 
-### youtube-summarizer
+```bash
+# Search for videos
+/mk-youtube-search "AI tutorial" 5
 
-Summarize YouTube videos from URL or transcript.
+# Get video info
+/mk-youtube-get-info https://www.youtube.com/watch?v=VIDEO_ID
 
-**Usage:**
+# Summarize a video
+/mk-youtube-summarize https://www.youtube.com/watch?v=VIDEO_ID
 ```
-/mk-youtube-summarize <YouTube URL>
-```
 
-**Features:**
+## Features
+
 - Extract video info (title, channel, duration)
 - Parse transcript/captions
 - Generate structured summary
+- Local audio transcription with Whisper.cpp (Metal GPU acceleration on macOS)
 - Support multilingual content (EN, JP, ZH-TW)
+- Auto-download for dependencies (yt-dlp, ffmpeg, whisper-cli, jq)
 
 ## Development
 
 ### Local Testing
 
 ```bash
-# 測試特定 plugin
-claude --plugin-dir ./plugins/youtube-summarizer
+# Test plugin locally
+claude --plugin-dir .
 
-# 驗證 skills 載入
-/skills  # 應顯示 mk-youtube-search, mk-youtube-get-info, mk-youtube-get-caption, mk-youtube-get-audio, mk-youtube-get-channel-latest, mk-youtube-audio-transcribe, mk-youtube-transcript-summarize, mk-youtube-summarize
+# Verify skills loaded
+/skills
 ```
 
 ### Validate Structure
@@ -81,25 +101,20 @@ claude plugin validate .
 ## Structure
 
 ```
-monkey-knowledge-skills/
+monkey-knowledge-youtube-skills/
 ├── .claude-plugin/
-│   └── marketplace.json        # Claude Code marketplace
-├── gemini-extension.json       # Gemini CLI manifest (root)
-├── skills/                     # Symlink → plugins/youtube-summarizer/skills/
-├── plugins/
-│   └── youtube-summarizer/
-│       ├── .claude-plugin/
-│       │   └── plugin.json     # Claude Code manifest
-│       ├── gemini-extension.json  # Gemini CLI manifest (plugin)
-│       └── skills/             # Agent Skills (cross-platform)
-│           ├── mk-youtube-search/
-│           ├── mk-youtube-get-info/
-│           ├── mk-youtube-get-caption/
-│           ├── mk-youtube-get-audio/
-│           ├── mk-youtube-get-channel-latest/
-│           ├── mk-youtube-audio-transcribe/
-│           ├── mk-youtube-transcript-summarize/
-│           └── mk-youtube-summarize/
+│   ├── marketplace.json        # Claude Code marketplace (互動式瀏覽)
+│   └── plugin.json             # Claude Code manifest (直接安裝)
+├── gemini-extension.json       # Gemini CLI manifest
+├── skills/                     # Agent Skills (cross-platform)
+│   ├── mk-youtube-search/
+│   ├── mk-youtube-get-info/
+│   ├── mk-youtube-get-caption/
+│   ├── mk-youtube-get-audio/
+│   ├── mk-youtube-get-channel-latest/
+│   ├── mk-youtube-audio-transcribe/
+│   ├── mk-youtube-transcript-summarize/
+│   └── mk-youtube-summarize/
 ├── CLAUDE.md
 ├── LICENSE
 └── README.md

@@ -1,5 +1,5 @@
 {
-  "name": "monkey-knowledge-skills",
-  "version": "1.0.2",
-  "description": "A plugin marketplace for AI coding assistants - YouTube video summarization and more"
+  "name": "youtube-summarizer",
+  "version": "1.0.3",
+  "description": "Summarize YouTube videos from URL or transcript"
 }

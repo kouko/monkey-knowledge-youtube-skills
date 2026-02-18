@@ -230,11 +230,11 @@ fi
 使用 `--plugin-dir` 參數載入本地 plugin：
 
 ```bash
-# 從專案根目錄測試 youtube-summarizer plugin
-claude --plugin-dir ./plugins/youtube-summarizer
+# 從專案根目錄測試
+claude --plugin-dir .
 
 # 或使用完整路徑
-claude --plugin-dir /path/to/monkey-knowledge-skills/plugins/youtube-summarizer
+claude --plugin-dir /path/to/monkey-knowledge-youtube-skills
 ```
 
 ### 驗證 Skills 是否載入
@@ -246,14 +246,14 @@ claude --plugin-dir /path/to/monkey-knowledge-skills/plugins/youtube-summarizer
 
 ### 開發流程
 
-1. 修改 `SKILL.md` 或 `scripts/*.sh`
-2. 重新啟動 Claude Code（使用 `--plugin-dir`）
+1. 修改 `skills/*/SKILL.md` 或 `skills/*/scripts/*.sh`
+2. 重新啟動 Claude Code（使用 `--plugin-dir .`）
 3. 測試修改後的功能
 4. 提交變更
 
-## 範例 Plugin
+## Skills 實作範例
 
-參考 `plugins/youtube-summarizer/` 的實作：
+參考 `skills/` 目錄下的實作：
 - 8 個獨立 skills（search、get-info、get-caption、get-audio、get-channel-latest、audio-transcribe、transcript-summarize、summarize）
 - 智能依賴管理（系統優先，自動下載/build 作為 fallback）
 - 統一 JSON 輸出格式
@@ -264,7 +264,7 @@ claude --plugin-dir /path/to/monkey-knowledge-skills/plugins/youtube-summarizer
 
 ## YouTube Summarizer 架構規範
 
-以下規範適用於 `plugins/youtube-summarizer/` 內的所有 skills。
+以下規範適用於 `skills/` 目錄內的所有 skills。
 
 ### 集中式 Metadata 儲存
 

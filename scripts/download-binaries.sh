@@ -24,8 +24,7 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PLUGIN_DIR="$SCRIPT_DIR/.."
-SKILLS_DIR="$PLUGIN_DIR/skills"
+SKILLS_DIR="$SCRIPT_DIR/../skills"
 
 # Options
 DRY_RUN=false
