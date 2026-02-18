@@ -25,8 +25,10 @@ Summarize YouTube videos from URL or transcript. Follows the [Agent Skills](http
 # 1. 加入 marketplace
 /plugin marketplace add kouko/monkey-knowledge-skills
 
-# 2. 開啟互動介面，進入 Discover 分頁選擇安裝
+# 2. 開啟互動介面
 /plugin
+
+# 3. 進入 Discover 分頁，選擇 youtube-summarizer 安裝
 ```
 
 ### Gemini CLI
