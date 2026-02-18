@@ -62,8 +62,8 @@ Success:
 ```json
 {
   "status": "success",
-  "file_path": "/tmp/monkey_knowledge/youtube/captions/20091025__VIDEO_ID.en.srt",
-  "text_file_path": "/tmp/monkey_knowledge/youtube/captions/20091025__VIDEO_ID.en.txt",
+  "file_path": "{baseDir}/data/20091025__VIDEO_ID.en.srt",
+  "text_file_path": "{baseDir}/data/20091025__VIDEO_ID.en.txt",
   "language": "en",
   "subtitle_type": "manual",
   "char_count": 30287,
@@ -82,7 +82,7 @@ Success:
 ```json
 {
   "status": "success",
-  "file_path": "/tmp/monkey_knowledge/youtube/captions/20091025__VIDEO_ID.en.srt",
+  "file_path": "{baseDir}/data/20091025__VIDEO_ID.en.srt",
   "subtitle_type": "cached",
   "cached": true,
   ...

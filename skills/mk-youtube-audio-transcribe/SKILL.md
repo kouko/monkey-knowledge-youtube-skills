@@ -36,7 +36,7 @@ Transcribe audio files to text using local whisper.cpp (no cloud API required).
 
 ## Examples
 
-- `/mk-youtube-audio-transcribe /tmp/monkey_knowledge/youtube/audio/video.m4a` - Transcribe with auto model selection
+- `/mk-youtube-audio-transcribe /path/to/audio/video.m4a` - Transcribe with auto model selection
 - `/mk-youtube-audio-transcribe video.m4a auto zh` - Auto-select best model for Chinese → belle-zh
 - `/mk-youtube-audio-transcribe video.m4a auto ja` - Auto-select best model for Japanese → kotoba-ja
 - `/mk-youtube-audio-transcribe audio.mp3 small en` - Use small model, force English
@@ -48,8 +48,8 @@ Transcribe audio files to text using local whisper.cpp (no cloud API required).
 2. Auto-download model if not found (with progress)
 3. Convert audio to 16kHz mono WAV using ffmpeg
 4. Run whisper-cli for transcription
-5. Save full JSON to `/tmp/monkey_knowledge/youtube/transcribe/<filename>.json`
-6. Save plain text to `/tmp/monkey_knowledge/youtube/transcribe/<filename>.txt`
+5. Save full JSON to `{baseDir}/data/<filename>.json`
+6. Save plain text to `{baseDir}/data/<filename>.txt`
 7. Return file paths and metadata
 
 ```
@@ -89,8 +89,8 @@ Transcribe audio files to text using local whisper.cpp (no cloud API required).
 ```json
 {
   "status": "success",
-  "file_path": "/tmp/monkey_knowledge/youtube/transcribe/20091025__VIDEO_ID.json",
-  "text_file_path": "/tmp/monkey_knowledge/youtube/transcribe/20091025__VIDEO_ID.txt",
+  "file_path": "{baseDir}/data/20091025__VIDEO_ID.json",
+  "text_file_path": "{baseDir}/data/20091025__VIDEO_ID.txt",
   "language": "en",
   "duration": "3:32",
   "model": "medium",
@@ -110,7 +110,7 @@ Transcribe audio files to text using local whisper.cpp (no cloud API required).
 ```json
 {
   "status": "success",
-  "file_path": "/tmp/monkey_knowledge/youtube/transcribe/20091025__VIDEO_ID.json",
+  "file_path": "{baseDir}/data/20091025__VIDEO_ID.json",
   "cached": true,
   ...
 }

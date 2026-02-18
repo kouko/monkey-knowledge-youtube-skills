@@ -113,8 +113,8 @@ When model is `auto` (default), the script automatically selects the best model 
 ```json
 {
   "status": "success",
-  "file_path": "/tmp/monkey_knowledge/youtube/transcribe/20240101__VIDEO_ID.json",
-  "text_file_path": "/tmp/monkey_knowledge/youtube/transcribe/20240101__VIDEO_ID.txt",
+  "file_path": "{baseDir}/data/20240101__VIDEO_ID.json",
+  "text_file_path": "{baseDir}/data/20240101__VIDEO_ID.txt",
   "language": "en",
   "duration": "3:32",
   "model": "medium",
@@ -202,7 +202,7 @@ Models are saved to `models/` directory.
 
 ```bash
 # Transcribe with default settings (medium model, auto language)
-./scripts/transcribe.sh /tmp/monkey_knowledge/youtube/audio/video.m4a
+./scripts/transcribe.sh /path/to/audio/video.m4a
 
 # Use smaller model for faster processing
 ./scripts/transcribe.sh audio.mp3 small
