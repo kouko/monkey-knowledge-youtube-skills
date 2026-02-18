@@ -508,7 +508,7 @@ write_or_merge_meta "$META_DIR/$BASENAME.meta.json" "$META_JSON" "true"
   summarize    ──▶ 讀取 meta/ + transcript file → 輸出到 data/
 ```
 
-### 版本發布流程
+### 版本管理
 
 #### 版本檔案位置
 
@@ -519,26 +519,4 @@ write_or_merge_meta "$META_DIR/$BASENAME.meta.json" "$META_JSON" "true"
 | Gemini | `gemini-extension.json` | `version` |
 | 各 Skill | `skills/*/SKILL.md` | `metadata.version` |
 
-#### 版本 Bump 規則
-
-| 變更類型 | Bump | 範例 |
-|---------|------|------|
-| 新功能（feat） | Minor | 1.0.0 → 1.1.0 |
-| 重構（refactor） | Minor | 1.1.0 → 1.2.0 |
-| 修復/內部變更 | Patch | 1.0.0 → 1.0.1 |
-| 破壞性變更 | Major | 1.0.0 → 2.0.0 |
-
-- Plugin 版本：整體專案版本，每次發布統一 bump
-- Skill 版本：各自獨立，依個別變更範圍決定
-
-#### 發布步驟
-
-1. Bump 各 `skills/*/SKILL.md` 的 `metadata.version`（依變更範圍）
-2. Bump 3 個 plugin/extension config 檔案版本（統一為新版號）
-3. 更新 `CHANGELOG.md`（Keep a Changelog 格式）
-   - 區段：Added / Changed / Fixed / Internal
-   - 底部補比較連結：`[X.Y.Z]: https://github.com/kouko/monkey-knowledge-youtube-skills/compare/vPREV...vX.Y.Z`
-4. 執行 `bash scripts/verify-utility-sync.sh` 確認 `_utility__` 腳本一致
-5. Commit：`chore: bump version to X.Y.Z`
-6. Push branch → 建立 PR → Merge
-7. 在 main 上打 tag：`git tag vX.Y.Z && git push origin vX.Y.Z`
+發布流程詳見 `/project:release`。
