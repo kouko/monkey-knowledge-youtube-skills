@@ -10,7 +10,7 @@
   },
   "plugins": [
     {
-      "name": "youtube-summarizer",
+      "name": "monkey-knowledge-youtube-skills",
       "source": ".",
       "description": "Summarize YouTube videos from URL or transcript",
       "version": "1.0.3",
