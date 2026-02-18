@@ -63,12 +63,13 @@ Run `bash scripts/verify-utility-sync.sh` — all `_utility__` copies must be id
 1. Commit: `chore: bump version to X.Y.Z`
 2. Push branch → Create PR → Merge
 
-### 7. Tag Release
+### 7. Tag & GitHub Release
 
 After PR merge, on main:
 ```bash
 git tag vX.Y.Z
 git push origin vX.Y.Z
+gh release create vX.Y.Z --title "vX.Y.Z" --notes "<CHANGELOG content for this version>"
 ```
 
 ## Checklist
@@ -80,3 +81,4 @@ git push origin vX.Y.Z
 - [ ] Commit message follows `chore: bump version to X.Y.Z`
 - [ ] PR created and merged
 - [ ] Tag pushed
+- [ ] GitHub Release created (with release notes from CHANGELOG)
