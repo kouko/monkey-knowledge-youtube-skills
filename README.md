@@ -17,13 +17,13 @@ Summarize YouTube videos from URL or transcript. Follows the [Agent Skills](http
 
 **方式 1：直接安裝**
 ```bash
-/plugin install https://github.com/kouko/monkey-knowledge-skills
+/plugin install https://github.com/kouko/monkey-knowledge-youtube-skills
 ```
 
 **方式 2：透過 Marketplace 瀏覽安裝**
 ```bash
 # 1. 加入 marketplace
-/plugin marketplace add kouko/monkey-knowledge-skills
+/plugin marketplace add kouko/monkey-knowledge-youtube-skills
 
 # 2. 開啟互動介面
 /plugin
@@ -34,15 +34,15 @@ Summarize YouTube videos from URL or transcript. Follows the [Agent Skills](http
 ### Gemini CLI
 
 ```bash
-gemini extensions install https://github.com/kouko/monkey-knowledge-skills
+gemini extensions install https://github.com/kouko/monkey-knowledge-youtube-skills
 ```
 
 ### OpenCode
 
 ```bash
-curl -L https://github.com/kouko/monkey-knowledge-skills/archive/refs/heads/main.tar.gz | \
+curl -L https://github.com/kouko/monkey-knowledge-youtube-skills/archive/refs/heads/main.tar.gz | \
   tar -xz --strip-components=1 -C ~/.config/opencode/skills/ \
-  "monkey-knowledge-skills-main/skills/"
+  "monkey-knowledge-youtube-skills-main/skills/"
 ```
 
 ## Available Skills
@@ -101,7 +101,7 @@ claude plugin validate .
 ## Structure
 
 ```
-monkey-knowledge-skills/
+monkey-knowledge-youtube-skills/
 ├── .claude-plugin/
 │   ├── marketplace.json        # Claude Code marketplace (互動式瀏覽)
 │   └── plugin.json             # Claude Code manifest (直接安裝)

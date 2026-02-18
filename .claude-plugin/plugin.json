@@ -6,8 +6,8 @@
     "name": "kouko",
     "url": "https://github.com/kouko"
   },
-  "homepage": "https://github.com/kouko/monkey-knowledge-skills",
-  "repository": "https://github.com/kouko/monkey-knowledge-skills",
+  "homepage": "https://github.com/kouko/monkey-knowledge-youtube-skills",
+  "repository": "https://github.com/kouko/monkey-knowledge-youtube-skills",
   "license": "MIT",
   "keywords": ["youtube", "video", "summarize", "caption"]
 }

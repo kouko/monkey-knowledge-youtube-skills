@@ -234,7 +234,7 @@ fi
 claude --plugin-dir .
 
 # 或使用完整路徑
-claude --plugin-dir /path/to/monkey-knowledge-skills
+claude --plugin-dir /path/to/monkey-knowledge-youtube-skills
 ```
 
 ### 驗證 Skills 是否載入
