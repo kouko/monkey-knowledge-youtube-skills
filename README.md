@@ -84,11 +84,13 @@ claude plugin validate .
 monkey-knowledge-skills/
 ├── .claude-plugin/
 │   └── marketplace.json        # Claude Code marketplace
+├── gemini-extension.json       # Gemini CLI manifest (root)
+├── skills/                     # Symlink → plugins/youtube-summarizer/skills/
 ├── plugins/
 │   └── youtube-summarizer/
 │       ├── .claude-plugin/
 │       │   └── plugin.json     # Claude Code manifest
-│       ├── gemini-extension.json  # Gemini CLI manifest
+│       ├── gemini-extension.json  # Gemini CLI manifest (plugin)
 │       └── skills/             # Agent Skills (cross-platform)
 │           ├── mk-youtube-search/
 │           ├── mk-youtube-get-info/
